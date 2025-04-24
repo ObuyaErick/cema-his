@@ -1,0 +1,28 @@
+version: '3'
+
+tasks:
+  start:
+    desc: "Start the Docker services"
+    cmds:
+      - sudo docker-compose -f docker-compose.yml up --build 
+
+  stop:
+    desc: "Stop the Docker services"
+    cmds:
+      - sudo docker compose -f docker-compose.yml down
+
+  restart:
+    desc: "Restart the Docker services"
+    cmds:
+      - docker compose -f docker-compose.yml down
+      - docker compose -f docker-compose.yml up -d
+
+  logs:
+    desc: "View the logs of the Docker services"
+    cmds:
+      - docker compose -f docker-compose.yml logs
+
+  clean:
+    desc: "Stop and remove Docker services and volumes"
+    cmds:
+      - sudo docker-compose -f docker-compose.yml down --rmi all

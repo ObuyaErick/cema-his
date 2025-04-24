@@ -1,0 +1,2 @@
+GRANT ALL PRIVILEGES ON *.* TO 'user_postgres'@'%';
+FLUSH PRIVILEGES;
