@@ -1,0 +1,44 @@
+import bcrypt from "bcrypt";
+import { PrismaClient, User } from "~/generated/prisma";
+
+const prisma = new PrismaClient();
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event);
+  const { email, password, name, role = "client" } = body;
+
+  let user: User | null = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (user) {
+    throw createError({
+      statusCode: 409,
+      message: "Email already taken",
+    });
+  }
+
+  // Hashing password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Creating new user
+  user = await prisma.user
+    .create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        role,
+      },
+    })
+    .catch((_error) => {
+      throw createError({
+        statusCode: 500,
+        message: "Sorry, an error occured during registration",
+      });
+    });
+
+  return {
+    message: "Registration successful",
+  };
+});

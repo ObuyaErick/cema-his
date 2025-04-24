@@ -8,6 +8,13 @@ export default defineNuxtConfig({
       apiBase: "/api",
     },
   },
+  vite: {
+    server: {
+      watch: {
+        ignored: ["**/infra/postgres/data/**"],
+      },
+    },
+  },
   modules: [
     "@nuxt/icon",
     "@nuxt/image",
