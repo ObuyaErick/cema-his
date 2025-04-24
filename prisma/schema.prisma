@@ -13,3 +13,48 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("doctor")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id               Int       @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  gender           String
+  contactNumber    String?
+  email            String?
+  address          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  enrollments      Enrollment[]
+}
+
+model HealthProgram {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  enrollments Enrollment[]
+}
+
+model Enrollment {
+  id              Int           @id @default(autoincrement()) 
+  client          Client        @relation(fields: [clientId], references: [id])
+  clientId        Int
+  healthProgram   HealthProgram @relation(fields: [healthProgramId], references: [id])
+  healthProgramId Int
+  enrollmentDate  DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([clientId, healthProgramId])
+}

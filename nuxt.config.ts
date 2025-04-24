@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
   runtimeConfig: {
-    apiSecret: "123",
+    jwtSecret: process.env.JWT_SECRET || "dev-secret-key",
     public: {
       apiBase: "/api",
     },
@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     "@nuxt/ui",
     "@nuxt/fonts",
     "@vueuse/nuxt",
+    "@pinia/nuxt",
   ],
   css: ["~/assets/css/main.css"],
   colorMode: {
