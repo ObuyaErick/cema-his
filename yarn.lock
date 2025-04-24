@@ -2139,6 +2139,16 @@
   resolved "https://registry.yarnpkg.com/@vueuse/metadata/-/metadata-13.1.0.tgz#959f8f2da5b18fb9b80529714dddb6ab69131d82"
   integrity sha512-+TDd7/a78jale5YbHX9KHW3cEDav1lz1JptwDvep2zSG8XjCsVE+9mHIzjTOaPbHUAk5XiE4jXLz51/tS+aKQw==
 
+"@vueuse/nuxt@^13.1.0":
+  version "13.1.0"
+  resolved "https://registry.yarnpkg.com/@vueuse/nuxt/-/nuxt-13.1.0.tgz#c1ff77d846a8230c2d58087550d5aefa62a9953b"
+  integrity sha512-4xdxwKanLY4+z+/ZgSZcJvwuHlgZMU3km7z4lhlbLl6WZTKS3BiztnRzcrdt4zjU512oTlH5nsPNhUhV0KXiOA==
+  dependencies:
+    "@nuxt/kit" "^3.16.2"
+    "@vueuse/core" "13.1.0"
+    "@vueuse/metadata" "13.1.0"
+    local-pkg "^1.1.1"
+
 "@vueuse/shared@10.11.1":
   version "10.11.1"
   resolved "https://registry.yarnpkg.com/@vueuse/shared/-/shared-10.11.1.tgz#62b84e3118ae6e1f3ff38f4fbe71b0c5d0f10938"
@@ -2200,6 +2210,31 @@
     "@whatwg-node/fetch" "^0.10.5"
     "@whatwg-node/promise-helpers" "^1.2.2"
     tslib "^2.6.3"
+
+"@yeger/debounce@2.0.12":
+  version "2.0.12"
+  resolved "https://registry.yarnpkg.com/@yeger/debounce/-/debounce-2.0.12.tgz#fd0027aa0dbe23d626ee9d94c79e4053de2ffd12"
+  integrity sha512-codFun59TrOW9a9g80VDCOlRsP77+hb/DT4aXXxROpCbz2OrdMZAemkzM69c4RhwUG3pTkztiqNEbsSRqSuxBg==
+
+"@yeger/vue-lib-adapter@2.0.12":
+  version "2.0.12"
+  resolved "https://registry.yarnpkg.com/@yeger/vue-lib-adapter/-/vue-lib-adapter-2.0.12.tgz#ce0f98bd299167816c3485bdd77c673c81ac234b"
+  integrity sha512-bz0j+pdpSH4oo8dVw+Hoxdy/485hDVz2CtYw5k7cCp1pukeF7lyWu/f4zJW0Z4CVF2XnIm07Yw5KjGgbR7QY6g==
+
+"@yeger/vue-masonry-wall-core@5.0.15":
+  version "5.0.15"
+  resolved "https://registry.yarnpkg.com/@yeger/vue-masonry-wall-core/-/vue-masonry-wall-core-5.0.15.tgz#1b4ec3847c63a192927e03ad46653e876bb41b12"
+  integrity sha512-w3jS1ckI+7FPgY47BI4Lsj46rOx7wE+WeXdZjPV68Sp6AUtI4Za9Fhu1aLkZLMjP3uh98BIEluhlxRngnCMtiQ==
+  dependencies:
+    "@yeger/debounce" "2.0.12"
+    "@yeger/vue-lib-adapter" "2.0.12"
+
+"@yeger/vue-masonry-wall@^5.0.18":
+  version "5.0.18"
+  resolved "https://registry.yarnpkg.com/@yeger/vue-masonry-wall/-/vue-masonry-wall-5.0.18.tgz#5932ce7f3b918101186248237243b376118f3cde"
+  integrity sha512-ofrisCxScdiknDU+Kvt79BLSI/z0v9m4tqJ7Am+tocpkeNHml7zIo9yHRZZg/m+uAVhRP2xlYw/kVsdh7m0Q9A==
+  dependencies:
+    "@yeger/vue-masonry-wall-core" "5.0.15"
 
 abbrev@1:
   version "1.1.1"
