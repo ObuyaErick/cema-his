@@ -20,7 +20,6 @@
     "@nuxt/ui": "3.0.2",
     "@pinia/nuxt": "0.11.0",
     "@prisma/client": "^6.6.0",
-    "@prisma/nuxt": "0.3.0",
     "@vueuse/nuxt": "^13.1.0",
     "@yeger/vue-masonry-wall": "^5.0.18",
     "bcrypt": "^5.1.1",

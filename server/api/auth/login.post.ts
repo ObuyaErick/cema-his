@@ -1,15 +1,14 @@
-
 import { compareSync, hashSync } from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import prisma from "~/lib/prisma";
-
-const runtimeConfig = useRuntimeConfig();
 
 export default defineEventHandler(async (event) => {
   const { email, password } = await readBody<{
     email: string;
     password: string;
   }>(event);
+
+  const runtimeConfig = useRuntimeConfig();
 
   // Check if user exists
   const user = await prisma.user

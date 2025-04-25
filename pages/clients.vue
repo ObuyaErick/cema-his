@@ -1,71 +1,112 @@
 <template>
-  <div class="p-6">
-    <UCard class="mb-6">
+  <div class="">
+    <UCard class="mb-6 shadow light:bg-white">
       <template #header>
         <div class="flex justify-between items-center">
           <h1 class="text-xl font-semibold">Clients</h1>
-          <UButton
-            icon="i-lucide-plus"
-            label="Add Client"
-            color="primary"
-            @click="navigateToAddClient"
-          />
+          <UButton icon="i-lucide-plus" label="Add Client" color="primary" />
         </div>
       </template>
 
-      <!-- Search & Filters -->
-      <div class="space-y-4 mb-4">
-        <!-- Search -->
-        <div>
-          <UInput
-            v-model="searchQuery"
-            placeholder="Search by name, email or phone..."
-            icon="i-lucide-search"
-            @input="resetPage"
-          />
-          <UButton
-            color="gray"
-            icon="i-lucide-funnel"
-            @click="isFilterOpen = !isFilterOpen"
-            :variant="isFilterOpen ? 'solid' : 'outline'"
-          />
-        </div>
-
-        <!-- Filters -->
-        <div v-if="isFilterOpen" class="p-4 bg-gray-50 rounded-lg">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <UFormField label="Gender">
+      <!-- Filters Modal -->
+      <UModal
+        description="Advanced client filters"
+        title="Client Filters"
+        aria-describedby="Filters"
+        v-model:open="isFilterOpen"
+        close
+      >
+        <template #body>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+            <UFormField class="grow" label="Gender">
               <USelect
+                class="w-full"
                 v-model="filters.gender"
-                :options="genderOptions"
+                :items="genderOptions"
                 placeholder="All genders"
                 clearable
               />
             </UFormField>
             <UFormField label="Date From">
-              <UInput v-model="filters.dateFrom" type="date" />
+              <UInput class="w-full" v-model="filters.dateFrom" type="date" />
             </UFormField>
             <UFormField label="Date To">
-              <UInput v-model="filters.dateTo" type="date" />
+              <UInput class="w-full" v-model="filters.dateTo" type="date" />
             </UFormField>
           </div>
-          <div class="flex justify-end space-x-2 mt-4">
-            <UButton color="gray" variant="outline" @click="resetFilters">
+          <div class="flex justify-end p-4 gap-4">
+            <UButton
+              color="neutral"
+              icon="i-lucide-rotate-ccw"
+              variant="outline"
+              @click="resetFilters"
+            >
               Reset
             </UButton>
-            <UButton color="primary" @click="applyFilters">
+            <UButton
+              class="text-gray-200"
+              color="primary"
+              @click="applyFilters"
+            >
               Apply Filters
             </UButton>
           </div>
-        </div>
+        </template>
+      </UModal>
+
+      <!-- Search & Filters -->
+      <div class="">
+        <!-- Search -->
+        <UButtonGroup class="w-full">
+          <UInput
+            class="grow"
+            size="lg"
+            v-model="searchQuery"
+            placeholder="Search by name, email or phone..."
+            icon="i-lucide-search"
+            @input="resetPage"
+          />
+
+          <UButton
+            icon="i-lucide-trash"
+            :disabled="!Object.entries(rowSelection).length"
+            size="lg"
+            color="neutral"
+            variant="outline"
+            >Delete Selected</UButton
+          >
+
+          <!-- Filters -->
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="lg"
+            icon="i-lucide-funnel"
+            @click="isFilterOpen = true"
+            >Filters</UButton
+          >
+        </UButtonGroup>
       </div>
 
       <!-- Clients Table -->
       <UTable
-        :data="paginatedClients"
-        :loading="loading"
+        v-if="clients"
+        @select="
+          (row) => {
+            row.toggleSelected(!row.getIsSelected());
+          }
+        "
+        ref="table"
+        v-model:expanded="expanded"
+        v-model:row-selection="rowSelection"
+        :columns="columns"
+        :data="clients.data"
+        :loading="status === 'pending'"
         empty="No clients found"
       >
+        <template #expanded="{ row }">
+          <pre>{{ row.original }}</pre>
+        </template>
         <!-- <template #name-data="{ row }">
           <div class="font-medium">{{ row.firstName }} {{ row.lastName }}</div>
         </template>
@@ -98,21 +139,49 @@
 
       <!-- Pagination -->
       <div class="mt-4 flex justify-between items-center">
-        <div class="text-sm text-gray-600">
+        <div class="text-sm">
           Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
-          {{ filteredClients.length }} entries
+          {{ paginationInfo.total }} entries
         </div>
         <UPagination
-          v-model="currentPage"
-          :page-count="totalPages"
-          :total="filteredClients.length"
-          :ui="{ wrapper: 'flex items-center gap-1' }"
+          v-model:page="currentPage"
+          size="xs"
+          :items-per-page="limit"
+          :total="paginationInfo.total"
         />
+      </div>
+      <div
+        class="py-2 mt-2 border-t border-(--ui-border-accented) text-sm text-muted flex justify-between"
+      >
+        <div>
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }}
+          of
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}
+          clients(s) selected.
+        </div>
+        <div class="">
+          <UButtonGroup>
+            <USelect
+              class="w-20"
+              v-model="limit"
+              :items="
+                [5, 10, 15, 20, 25, 50, 75, 100].map((count) => ({
+                  label: `${count}`,
+                  value: count,
+                }))
+              "
+            >
+            </USelect>
+            <UButton color="neutral" variant="outline"
+              >Clients per page</UButton
+            >
+          </UButtonGroup>
+        </div>
       </div>
     </UCard>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model="showDeleteModal">
+    <!-- <UModal v-model="showDeleteModal">
       <UButton>Delete</UButton>
       <template #content>
         <UCard>
@@ -136,216 +205,221 @@
           </template>
         </UCard>
       </template>
-    </UModal>
+    </UModal> -->
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from "vue";
+<script setup lang="ts">
+import type { TableColumn } from "@nuxt/ui";
+import type { Client } from "~/generated/prisma";
+import type { Column, Row } from "@tanstack/vue-table";
 
-// State
-const clients = ref([]);
-const loading = ref(true);
+const table = useTemplateRef("table");
+
 const searchQuery = ref("");
 const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const limit = ref(10);
 const isFilterOpen = ref(false);
-const showDeleteModal = ref(false);
-const clientToDelete = ref(null);
 const filters = ref({
-  gender: null,
+  gender: "",
   dateFrom: "",
   dateTo: "",
 });
+const reqFilters = ref<Record<string, string>>({});
+const {
+  data: clients,
+  status,
+  refresh,
+} = useFetch("/api/clients", {
+  query: {
+    limit,
+    page: currentPage,
+    search: searchQuery,
+    ...reqFilters.value,
+  },
+});
 
 // Constants
-const genderOptions = [
+const genderOptions = shallowRef([
   { label: "Male", value: "Male" },
   { label: "Female", value: "Female" },
   { label: "Other", value: "Other" },
-];
+]);
+
+const expanded = ref({});
+const rowSelection = ref({});
 
 // Table columns
-const columns = [
+const columns = shallowRef<TableColumn<Client>[]>([
   {
-    key: "name",
-    label: "Name",
-    sortable: true,
+    id: "select",
+    header: ({ table }) =>
+      h(resolveComponent("UCheckbox"), {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? "indeterminate"
+          : table.getIsAllPageRowsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          table.toggleAllPageRowsSelected(!!value),
+        "aria-label": "Select all",
+      }),
+    cell: ({ row }) =>
+      h(resolveComponent("UCheckbox"), {
+        modelValue: row.getIsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          row.toggleSelected(!!value),
+        "aria-label": "Select row",
+      }),
   },
   {
-    key: "email",
-    label: "Email",
-    sortable: true,
+    id: "expand",
+    cell: ({ row }) =>
+      h(resolveComponent("UButton"), {
+        color: "neutral",
+        variant: row.getIsExpanded() ? "solid" : "ghost",
+        icon: "i-lucide-chevron-down",
+        square: true,
+        "aria-label": "Expand",
+        ui: {
+          leadingIcon: [
+            "transition-all",
+            row.getIsExpanded() ? "duration-300 rotate-180" : "",
+          ],
+        },
+        onClick: () => row.toggleExpanded(),
+      }),
   },
   {
-    key: "contactNumber",
-    label: "Phone",
+    accessorKey: "firstName",
+    header: ({ column }) => sortableHeader(column, "FirstName"),
   },
   {
-    key: "gender",
-    label: "Gender",
-    sortable: true,
+    accessorKey: "lastName",
+    header: ({ column }) => sortableHeader(column, "LastName"),
   },
   {
-    key: "age",
-    label: "Age",
-    sortable: true,
+    accessorKey: "email",
+    header: ({ column }) => sortableHeader(column, "Email"),
   },
   {
-    key: "actions",
-    label: "Actions",
-    sortable: false,
+    accessorKey: "contactNumber",
+    header: "Phone",
   },
-];
+  {
+    accessorKey: "gender",
+    header: "Gender",
+    cell: ({ row }) => {
+      const color = {
+        Male: "primary" as const,
+        Female: "warning" as const,
+      }[row.getValue("gender") as string];
 
-// Helper function to calculate age
-const calculateAge = (dob) => {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
+      return h(
+        resolveComponent("UBadge"),
+        { class: "capitalize", variant: "subtle", color },
+        () => row.getValue("gender")
+      );
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      return h(
+        "div",
+        { class: "text-right" },
+        h(
+          resolveComponent("UDropdownMenu"),
+          {
+            content: {
+              align: "end",
+            },
+            items: getRowItems(row),
+            "aria-label": "Actions dropdown",
+          },
+          () =>
+            h(resolveComponent("UButton"), {
+              icon: "i-lucide-ellipsis-vertical",
+              color: "neutral",
+              variant: "ghost",
+              class: "ml-auto",
+              "aria-label": "Actions dropdown",
+            })
+        )
+      );
+    },
+  },
+]);
 
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
+function sortableHeader(column: Column<Client>, label: string) {
+  const isSorted = column.getIsSorted();
 
-  return age;
-};
+  return h(resolveComponent("UButton"), {
+    color: "neutral",
+    variant: "ghost",
+    label: label,
+    icon: isSorted
+      ? isSorted === "asc"
+        ? "i-lucide-arrow-up-narrow-wide"
+        : "i-lucide-arrow-down-wide-narrow"
+      : "i-lucide-arrow-up-down",
+    class: "",
+    onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+  });
+}
 
-// Fetch clients from API
-const fetchClients = async () => {
-  loading.value = true;
-  try {
-    // Replace with your actual API endpoint
-    const response = await fetch("/api/clients");
-    clients.value = await response.json();
-  } catch (error) {
-    console.error("Error fetching clients:", error);
-    // Show error notification
-    useToast().add({
-      title: "Error",
-      description: "Failed to load clients",
-      color: "red",
-    });
+function getRowItems(row: Row<Client>) {
+  return [
+    {
+      type: "label",
+      label: "Actions",
+    },
+    {
+      label: "Copy payment ID",
+      icon: "i-lucide-copy",
+      onSelect() {
+        navigator.clipboard.writeText(String(row.original.id));
+        useToast().add({
+          title: "Copied client's ID to clipboard!",
+          color: "success",
+          icon: "i-lucide-circle-check",
+        });
+      },
+    },
+    {
+      type: "separator",
+    },
+    {
+      label: "View client's details",
+      icon: "i-lucide-book-user",
+    },
+    {
+      label: "Add Program",
+      icon: "i-lucide-package-plus",
+    },
+    {
+      type: "separator",
+    },
+    {
+      label: "Delete client",
+      icon: "i-lucide-trash",
+    },
+  ];
+}
 
-    // For demo purposes, generate sample data
-    clients.value = generateSampleClients();
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Generate sample clients for demonstration
-const generateSampleClients = () => {
-  const sampleClients = [];
-  const genders = ["Male", "Female", "Other"];
-
-  for (let i = 1; i <= 50; i++) {
-    const firstName = `FirstName${i}`;
-    const lastName = `LastName${i}`;
-    const gender = genders[Math.floor(Math.random() * genders.length)];
-
-    // Generate random date of birth (between 18 and 80 years ago)
-    const now = new Date();
-    const years = Math.floor(Math.random() * 62) + 18;
-    const birthDate = new Date(
-      now.getFullYear() - years,
-      Math.floor(Math.random() * 12),
-      Math.floor(Math.random() * 28) + 1
-    );
-
-    sampleClients.push({
-      id: i,
-      firstName,
-      lastName,
-      dateOfBirth: birthDate,
-      gender,
-      contactNumber: `+1-555-${String(
-        Math.floor(1000 + Math.random() * 9000)
-      )}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-      address: `${Math.floor(Math.random() * 999) + 1} Example St, Sample City`,
-      createdAt: new Date(
-        now - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000)
-      ),
-      updatedAt: new Date(),
-    });
-  }
-
-  return sampleClients;
-};
-
-// Filter clients based on search query and filters
-const filteredClients = computed(() => {
-  let result = [...clients.value];
-
-  // Apply search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (client) =>
-        `${client.firstName} ${client.lastName}`
-          .toLowerCase()
-          .includes(query) ||
-        (client.email && client.email.toLowerCase().includes(query)) ||
-        (client.contactNumber &&
-          client.contactNumber.toLowerCase().includes(query))
-    );
-  }
-
-  // Apply gender filter
-  if (filters.value.gender) {
-    result = result.filter((client) => client.gender === filters.value.gender);
-  }
-
-  // Apply date range filter
-  if (filters.value.dateFrom) {
-    const dateFrom = new Date(filters.value.dateFrom);
-    result = result.filter(
-      (client) => new Date(client.dateOfBirth) >= dateFrom
-    );
-  }
-
-  if (filters.value.dateTo) {
-    const dateTo = new Date(filters.value.dateTo);
-    dateTo.setHours(23, 59, 59, 999); // Set to end of day
-    result = result.filter((client) => new Date(client.dateOfBirth) <= dateTo);
-  }
-
-  return result;
-});
-
-// Pagination
-const totalPages = computed(() => {
-  return Math.ceil(filteredClients.value.length / itemsPerPage.value);
-});
-
-const paginatedClients = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredClients.value.slice(start, end);
-});
-
+// Pagination information
 const paginationInfo = computed(() => {
-  const total = filteredClients.value.length;
-
-  if (total === 0) {
-    return { from: 0, to: 0 };
-  }
-
-  const from = (currentPage.value - 1) * itemsPerPage.value + 1;
-  const to = Math.min(from + itemsPerPage.value - 1, total);
-
-  return { from, to };
+  const limit = Number(clients.value?.limit ?? 10);
+  const from = (Number(clients.value?.page ?? 1) - 1) * limit + 1;
+  const end = from + limit - 1;
+  const total = Number(clients.value?.total ?? 0);
+  const to = end > total ? total : end;
+  const pageCount = Math.ceil(total / limit);
+  return { from, to, total, limit, pageCount };
 });
 
 // Filter handlers
 const resetFilters = () => {
   filters.value = {
-    gender: null,
+    gender: "",
     dateFrom: "",
     dateTo: "",
   };
@@ -354,78 +428,21 @@ const resetFilters = () => {
 
 const applyFilters = () => {
   resetPage();
+  reqFilters.value = Object.entries(filters.value).reduce(
+    (acc, [key, value]) => {
+      if (value) {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+  refresh();
 };
 
 const resetPage = () => {
   currentPage.value = 1;
 };
-
-// CRUD operations
-const viewClient = (client) => {
-  navigateTo(`/clients/${client.id}`);
-};
-
-const editClient = (client) => {
-  navigateTo(`/clients/${client.id}/edit`);
-};
-
-const navigateToAddClient = () => {
-  navigateTo("/clients/new");
-};
-
-const confirmDelete = (client) => {
-  clientToDelete.value = client;
-  showDeleteModal.value = true;
-};
-
-const deleteClient = async () => {
-  if (!clientToDelete.value) return;
-
-  try {
-    // Replace with your actual delete API endpoint
-    // await fetch(`/api/clients/${clientToDelete.value.id}`, {
-    //   method: 'DELETE'
-    // })
-
-    // Update local state (for demo)
-    clients.value = clients.value.filter(
-      (c) => c.id !== clientToDelete.value.id
-    );
-
-    // Show success notification
-    useToast().add({
-      title: "Success",
-      description: `Client ${clientToDelete.value.firstName} ${clientToDelete.value.lastName} deleted successfully`,
-      color: "green",
-    });
-
-    showDeleteModal.value = false;
-    clientToDelete.value = null;
-  } catch (error) {
-    console.error("Error deleting client:", error);
-    useToast().add({
-      title: "Error",
-      description: "Failed to delete client",
-      color: "red",
-    });
-  }
-};
-
-const onClientSelect = (client) => {
-  viewClient(client);
-};
-
-// Initialize page
-onMounted(() => {
-  // fetchClients();
-  $fetch("/api/clients")
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-});
 
 definePageMeta({
   layout: "main",

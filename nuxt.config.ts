@@ -22,7 +22,6 @@ export default defineNuxtConfig({
     "@nuxt/fonts",
     "@vueuse/nuxt",
     "@pinia/nuxt",
-    "@prisma/nuxt",
   ],
   css: ["~/assets/css/main.css"],
   colorMode: {

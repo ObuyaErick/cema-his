@@ -4,12 +4,13 @@ const sideNavOpen = ref(false);
 
 <template>
   <div class="flex gap-3 p-3 fixed inset-0 vertical-scrollbar">
-    <div class="min-w-[12rem] hidden lg:flex sticky top-0 flex-col">
+    <div class="min-w-[10rem] hidden lg:flex sticky top-0 flex-col">
       <AppLogo class="mb-3" />
       <USeparator></USeparator>
       <NavigationDrawer class="mt-2" />
     </div>
     <USlideover
+      aria-describedby="NavigationDrawer"
       :overlay="false"
       class="lg:hidden rounded-l-lg"
       v-model:open="sideNavOpen"
