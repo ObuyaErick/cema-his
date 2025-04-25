@@ -1,7 +1,8 @@
-import { PrismaClient } from "~/generated/prisma";
+import prisma from "~/lib/prisma";
 
-const prisma = new PrismaClient();
-
+/**
+ * Retrieve a list of offered health programs
+ */
 export default defineEventHandler(async (_event) => {
   try {
     const healthPrograms = await prisma.healthProgram.findMany({

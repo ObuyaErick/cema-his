@@ -1,6 +1,4 @@
-import { PrismaClient } from "~/generated/prisma";
-
-const prisma = new PrismaClient();
+import prisma from "~/lib/prisma";
 
 /**
  * Obtains a list of programs the client is enrolled in

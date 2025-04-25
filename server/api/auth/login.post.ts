@@ -1,8 +1,8 @@
-import { PrismaClient } from "~/generated/prisma";
-import { compareSync, hashSync } from "bcrypt";
-import { sign } from "jsonwebtoken";
 
-const prisma = new PrismaClient();
+import { compareSync, hashSync } from "bcrypt";
+import * as jwt from "jsonwebtoken";
+import prisma from "~/lib/prisma";
+
 const runtimeConfig = useRuntimeConfig();
 
 export default defineEventHandler(async (event) => {
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Create a JWT token expiring in after 3 hours from the time of creation
-  const token = sign(
+  const token = jwt.sign(
     {
       userId: user.id,
       email: user.email,

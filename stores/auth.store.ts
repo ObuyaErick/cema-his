@@ -13,6 +13,9 @@ export const useAuthStore = defineStore("auth", {
     loggedIn(state) {
       return !!state.auth;
     },
+    user(state) {
+      return state.auth?.principal;
+    },
   },
   actions: {
     clear() {

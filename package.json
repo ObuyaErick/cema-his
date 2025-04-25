@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "node prisma/seed.js"
   },
   "scripts": {
     "build": "nuxt build",
@@ -20,6 +20,7 @@
     "@nuxt/ui": "3.0.2",
     "@pinia/nuxt": "0.11.0",
     "@prisma/client": "^6.6.0",
+    "@prisma/nuxt": "0.3.0",
     "@vueuse/nuxt": "^13.1.0",
     "@yeger/vue-masonry-wall": "^5.0.18",
     "bcrypt": "^5.1.1",
@@ -33,6 +34,8 @@
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "devDependencies": {
+    "@faker-js/faker": "^9.7.0",
+    "@iconify-json/lucide": "^1.2.39",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9"
   }

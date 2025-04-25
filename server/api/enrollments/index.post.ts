@@ -1,7 +1,8 @@
-import { PrismaClient } from "~/generated/prisma";
+import prisma from "~/lib/prisma";
 
-const prisma = new PrismaClient();
-
+/**
+ * Enroll a client into a program
+ */
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);

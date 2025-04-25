@@ -1,9 +1,10 @@
 <template>
-  <div>Home Page</div>
+  <div>Programs</div>
 </template>
 
-<script setup lang="ts">
+<script setup lang=ts>
 definePageMeta({
   layout: "main",
 });
 </script>
+
