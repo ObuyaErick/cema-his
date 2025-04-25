@@ -66,14 +66,12 @@ async function main() {
   console.log(`Successfully seeded ${createdClients.count} clients`);
 }
 
-// main()
-//   .catch((e) => {
-//     console.error('Error seeding clients:', e)
-//     process.exit(1)
-//   })
-//   .finally(async () => {
-//     // Close Prisma client connection
-//     await prisma.$disconnect()
-//   })
-
-console.log("Seeding");
+main()
+  .catch((e) => {
+    console.error('Error seeding clients:', e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    // Close Prisma client connection
+    await prisma.$disconnect()
+  })
