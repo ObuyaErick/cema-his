@@ -1,11 +1,12 @@
 import prisma from "~/lib/prisma";
+import { ClientRegistrationSchema } from "~/shared/types/clients.types";
 
 /**
  * Creates a new client
  */
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event);
+    const body = await readBody<ClientRegistrationSchema>(event);
     const {
       firstName,
       lastName,
@@ -27,11 +28,10 @@ export default defineEventHandler(async (event) => {
         contactNumber,
         email,
         address,
-        // Create enrollments if programIds are provided
         enrollments: {
-          create: (programIds as number[]).map((programId) => ({
+          create: programIds.map((programId) => ({
             healthProgram: {
-              connect: { id: programId },
+              connect: { id: Number(programId) },
             },
           })),
         },

@@ -1,10 +1,34 @@
 <template>
-  <div class="">
+  <div class="grid">
     <UCard class="mb-6 shadow light:bg-white">
       <template #header>
         <div class="flex justify-between items-center">
           <h1 class="text-xl font-semibold">Clients</h1>
-          <UButton icon="i-lucide-plus" label="Add Client" color="primary" />
+          <USlideover
+            :ui="{
+              content: 'max-w-lg top-8 mx-auto rounded-t-lg',
+            }"
+            close-icon="i-lucide-chevron-down"
+            side="bottom"
+            :overlay="false"
+            v-model:open="createClientSlideOverOpen"
+            title="New Client"
+            aria-describedby="New client registration"
+            description="client registration"
+          >
+            <UButton icon="i-lucide-plus" label="Add Client" color="primary" />
+            <template #body>
+              <ClientRegistrationForm
+                @cancelling="createClientSlideOverOpen = false"
+                @done="
+                  () => {
+                    createClientSlideOverOpen = false;
+                    refresh();
+                  }
+                "
+              ></ClientRegistrationForm>
+            </template>
+          </USlideover>
         </div>
       </template>
 
@@ -73,6 +97,8 @@
             size="lg"
             color="neutral"
             variant="outline"
+            @click="deleteSelected"
+            :loading="deletingSelected"
             >Delete Selected</UButton
           >
 
@@ -89,53 +115,87 @@
       </div>
 
       <!-- Clients Table -->
-      <UTable
-        v-if="clients"
-        @select="
-          (row) => {
-            row.toggleSelected(!row.getIsSelected());
-          }
-        "
-        ref="table"
-        v-model:expanded="expanded"
-        v-model:row-selection="rowSelection"
-        :columns="columns"
-        :data="clients.data"
-        :loading="status === 'pending'"
-        empty="No clients found"
-      >
-        <template #expanded="{ row }">
-          <pre>{{ row.original }}</pre>
-        </template>
-        <!-- <template #name-data="{ row }">
-          <div class="font-medium">{{ row.firstName }} {{ row.lastName }}</div>
-        </template>
-        <template #age-data="{ row }">
-          {{ calculateAge(row.dateOfBirth) }}
-        </template>
-        <template #actions-data="{ row }">
-          <div class="flex items-center gap-2">
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-lucide-eye"
-              @click="viewClient(row)"
-            />
-            <UButton
-              color="primary"
-              variant="ghost"
-              icon="i-lucide-square-pen"
-              @click="editClient(row)"
-            />
-            <UButton
-              color="red"
-              variant="ghost"
-              icon="i-lucide-trash"
-              @click="confirmDelete(row)"
-            />
-          </div>
-        </template> -->
-      </UTable>
+      <div class="grid">
+        <UTable
+          :ui="{ root: 'horizontal-scrollbar' }"
+          v-if="clients"
+          @select="
+            (row) => {
+              row.toggleSelected(!row.getIsSelected());
+            }
+          "
+          ref="table"
+          v-model:expanded="expanded"
+          v-model:row-selection="rowSelection"
+          :columns="columns"
+          :data="clients.data"
+          :loading="tableLoading || status === 'pending'"
+          empty="No clients found"
+        >
+          <template #expanded="{ row: { original: client } }">
+            <UCard>
+              <div class="grid gap-2">
+                <div class="flex flex-wrap gap-2">
+                  <div
+                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                  >
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-circle-user"></UIcon>Full
+                      Name</span
+                    >
+                    <div class="font-bold">
+                      {{ client.firstName }} {{ client.lastName }}
+                    </div>
+                  </div>
+                  <div
+                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                  >
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-calendar-days"></UIcon>Date of
+                      Birth</span
+                    >
+                    <div class="font-bold">
+                      {{ new Date(client.dateOfBirth).toDateString() }}
+                    </div>
+                  </div>
+                  <div
+                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                  >
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-map-pin-house"></UIcon
+                      >Address</span
+                    >
+                    <div class="font-bold">{{ client.address }}</div>
+                  </div>
+                  <div
+                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                  >
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-calendar-clock"></UIcon
+                      >Registration Date</span
+                    >
+                    <div class="font-bold">
+                      {{ new Date(client.createdAt).toDateString() }}
+                    </div>
+                  </div>
+                </div>
+                <USeparator></USeparator>
+                <div>
+                  <h4>Programs</h4>
+                  <div class="flex gap-2">
+                    <UBadge
+                      v-for="healthProgram in client.healthPrograms"
+                      color="neutral"
+                      variant="outline"
+                      >{{ healthProgram.name }}</UBadge
+                    >
+                  </div>
+                </div>
+              </div>
+            </UCard>
+          </template>
+        </UTable>
+      </div>
 
       <!-- Pagination -->
       <div class="mt-4 flex justify-between items-center">
@@ -211,15 +271,22 @@
 
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
-import type { Client } from "~/generated/prisma";
+import type { Client, HealthProgram } from "~/generated/prisma";
 import type { Column, Row } from "@tanstack/vue-table";
+import type { Paginated } from "~/shared/types/pagination.types";
+
+type ClientWithHealthPrograms = Client & { healthProgram: HealthProgram };
 
 const table = useTemplateRef("table");
+const tableLoading = ref(false);
+
+const deletingSelected = ref(false);
 
 const searchQuery = ref("");
 const currentPage = ref(1);
 const limit = ref(10);
 const isFilterOpen = ref(false);
+const createClientSlideOverOpen = ref(false);
 const filters = ref({
   gender: "",
   dateFrom: "",
@@ -230,7 +297,7 @@ const {
   data: clients,
   status,
   refresh,
-} = useFetch("/api/clients", {
+} = useFetch<Paginated<ClientWithHealthPrograms>>("/api/clients", {
   query: {
     limit,
     page: currentPage,
@@ -246,11 +313,11 @@ const genderOptions = shallowRef([
   { label: "Other", value: "Other" },
 ]);
 
-const expanded = ref({});
-const rowSelection = ref({});
+const expanded = ref<Record<number, boolean>>();
+const rowSelection = ref<Record<number, boolean>>({});
 
 // Table columns
-const columns = shallowRef<TableColumn<Client>[]>([
+const columns = shallowRef<TableColumn<ClientWithHealthPrograms>[]>([
   {
     id: "select",
     header: ({ table }) =>
@@ -349,7 +416,10 @@ const columns = shallowRef<TableColumn<Client>[]>([
   },
 ]);
 
-function sortableHeader(column: Column<Client>, label: string) {
+function sortableHeader(
+  column: Column<ClientWithHealthPrograms>,
+  label: string
+) {
   const isSorted = column.getIsSorted();
 
   return h(resolveComponent("UButton"), {
@@ -366,14 +436,14 @@ function sortableHeader(column: Column<Client>, label: string) {
   });
 }
 
-function getRowItems(row: Row<Client>) {
+function getRowItems(row: Row<ClientWithHealthPrograms>) {
   return [
     {
       type: "label",
       label: "Actions",
     },
     {
-      label: "Copy payment ID",
+      label: "Copy client's ID",
       icon: "i-lucide-copy",
       onSelect() {
         navigator.clipboard.writeText(String(row.original.id));
@@ -390,10 +460,12 @@ function getRowItems(row: Row<Client>) {
     {
       label: "View client's details",
       icon: "i-lucide-book-user",
+      to: `/clients/${row.original.id}`,
     },
     {
       label: "Add Program",
       icon: "i-lucide-package-plus",
+      to: `/clients/${row.original.id}#enrolled_programs`,
     },
     {
       type: "separator",
@@ -401,6 +473,20 @@ function getRowItems(row: Row<Client>) {
     {
       label: "Delete client",
       icon: "i-lucide-trash",
+      onSelect() {
+        tableLoading.value = true;
+        deleteClients([row?.original?.id])
+          .catch((error) => {
+            useToast().add({
+              title: "Failed",
+              description: error.message || "Failed to delete client",
+              color: "error",
+            });
+          })
+          .finally(() => {
+            tableLoading.value = false;
+          });
+      },
     },
   ];
 }
@@ -442,6 +528,53 @@ const applyFilters = () => {
 
 const resetPage = () => {
   currentPage.value = 1;
+};
+
+const deleteClients = async (ids: (string | number)[]) => {
+  if (ids.length) {
+    await $fetch("/api/clients/delete-bulk", {
+      method: "DELETE",
+      body: {
+        ids,
+      },
+    }).then((res) => {
+      useToast().add({
+        title: "Success",
+        description:
+          res.message ||
+          `${ids.length ? "Client" : "Clients"} deleted successfully`,
+        color: "success",
+      });
+      refresh();
+      rowSelection.value = {};
+    });
+  } else {
+    useToast().add({
+      title: "Error",
+      description: "Please select at least one entry",
+      color: "warning",
+    });
+  }
+};
+
+const deleteSelected = async () => {
+  const ids = Object.keys(rowSelection.value);
+  if (clients.value?.data && ids.length) {
+    deletingSelected.value = true;
+    await deleteClients(
+      ids.map((index) => clients.value!.data[Number(index)].id)
+    )
+      .catch((error) => {
+        useToast().add({
+          title: "Failed",
+          description: error.message || "Failed to delete entries",
+          color: "error",
+        });
+      })
+      .finally(() => {
+        deletingSelected.value = false;
+      });
+  }
 };
 
 definePageMeta({

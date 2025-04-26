@@ -1,11 +1,12 @@
 import prisma from "~/lib/prisma";
+import { ProgramRegistrationSchema } from "~/shared/types/programs.types";
 
 /**
  * Creates a new health program
  */
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event);
+    const body = await readBody<ProgramRegistrationSchema>(event);
     const { name, description } = body;
 
     // Check if program exists
@@ -20,15 +21,17 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // A new health program
-    const healthProgram = await prisma.healthProgram.create({
+    // Create a new health program
+    await prisma.healthProgram.create({
       data: {
         name,
         description,
       },
     });
 
-    return healthProgram;
+    
+
+    return { message: "Health program created successfully" };
   } catch (error: any) {
     throw createError({
       statusCode: error.statusCode || 500,

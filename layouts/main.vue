@@ -22,6 +22,9 @@ const sideNavOpen = ref(false);
       <template #title>
         <AppLogo />
       </template>
+      <template #description>
+        <USeparator></USeparator>
+      </template>
       <template #body>
         <div class="flex grow">
           <NavigationDrawer @select="() => (sideNavOpen = false)" />
@@ -30,7 +33,7 @@ const sideNavOpen = ref(false);
     </USlideover>
 
     <div class="flex flex-col grow gap-3">
-      <div class="flex gap-3">
+      <div class="flex gap-3 items-center">
         <UButton class="p-1.5 lg:hidden" color="neutral" variant="subtle">
           <AnimatedMenu
             v-model:open="sideNavOpen"
@@ -38,21 +41,12 @@ const sideNavOpen = ref(false);
           ></AnimatedMenu>
         </UButton>
 
-        <div class="grow flex">
-          <!-- <UModal>
-            <UButton
-              leading-icon="i-lucide-search"
-              size="lg"
-              class="pl-4 justify-start grow max-w-lg"
-              variant="subtle"
-              color="neutral"
-              >Search...
-            </UButton>
-
-            <template #content>
-              <UCommandPalette></UCommandPalette>
-            </template>
-          </UModal> -->
+        <div class="grow flex justify-end">
+          <UAvatar
+            class="bg-(--ui-bg-inverted)"
+            src="https://github.com/ObuyaErick.png"
+            alt="John Doe"
+          ></UAvatar>
         </div>
       </div>
       <div class="flex flex-col grow">

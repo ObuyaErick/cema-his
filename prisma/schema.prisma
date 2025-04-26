@@ -56,5 +56,17 @@ model Enrollment {
   enrollmentDate  DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  notes           Note[]
+
   @@unique([clientId, healthProgramId])
+}
+
+model Note {
+  id            Int           @id @default(autoincrement()) 
+  title         String
+  content       String
+  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId  Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }

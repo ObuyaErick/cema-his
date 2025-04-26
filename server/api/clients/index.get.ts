@@ -56,6 +56,24 @@ export default defineEventHandler(async (event) => {
       },
       skip: zeroBasedPage * limit,
       take: limit,
+      include: {
+        enrollments: {
+          include: {
+            healthProgram: true,
+          },
+        },
+      },
+    });
+
+    // Transform the data to include programs in a more accessible format
+    const clientsWithPrograms = clients.map((client) => {
+      const { enrollments, ...clientData } = client;
+      return {
+        ...clientData,
+        healthPrograms: enrollments.map(
+          (enrollment) => enrollment.healthProgram
+        ),
+      };
     });
 
     const total = await prisma.client.count({
@@ -63,7 +81,7 @@ export default defineEventHandler(async (event) => {
     });
 
     const paginatedClients: Paginated<Client> = {
-      data: clients,
+      data: clientsWithPrograms,
       total,
       page: oneBasedPage,
       limit,
