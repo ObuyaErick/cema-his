@@ -6,7 +6,7 @@
       color="primary"
       variant="pill"
       :items="
-        authStore.role === 'admin' ? navigationItems : [navigationItems[0], []]
+        authStore.role === 'doctor' ? navigationItems : [navigationItems[0], []]
       "
     >
     </UNavigationMenu>
@@ -31,7 +31,7 @@
           icon="i-lucide-log-out"
           variant="soft"
           color="neutral"
-          @click="() => logout()"
+          @click="logout"
           >Logout</UButton
         >
       </div>
@@ -41,6 +41,9 @@
 
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
+import { LOGOUT_ACTION_KEY } from "~/shared/utils/keys";
+
+const authStore = useAuthStore();
 
 const emit = defineEmits<{
   (e: "select"): void;
@@ -57,6 +60,15 @@ const navigationItems = ref<NavigationMenuItem[][]>([
     },
   ],
   [
+    {
+      label: "Users",
+      description: "Users",
+      icon: "i-lucide-users",
+      to: "/users",
+      onSelect: () => {
+        emit("select");
+      },
+    },
     {
       label: "Programs",
       description: "Health Programs",
@@ -79,21 +91,5 @@ const navigationItems = ref<NavigationMenuItem[][]>([
   [],
 ]);
 
-const authStore = useAuthStore();
-const appStore = useAppStore();
-
-const logout = () => {
-  appStore.setBusy(true);
-
-  authStore
-    .logout()
-    .then((res) => {
-      useToast().add({
-        color: res.status,
-        title: res.status === "success" ? "Success" : "Failed",
-        description: res.message,
-      });
-    })
-    .finally(() => appStore.setBusy(false));
-};
+const logout = inject<() => void>(LOGOUT_ACTION_KEY);
 </script>

@@ -88,10 +88,13 @@ import type { UIClientDetails } from "~/shared/types/clients.types";
 
 const route = useRoute();
 const clientId = route.params.id as string;
-const { data: client } = useFetch<UIClientDetails>(`/api/clients/${clientId}`, {
-  key: `client-profile-${clientId}`,
-  default: () => null,
-});
+const { data: client, error } = useFetch<UIClientDetails>(
+  `/api/clients/${clientId}`,
+  {
+    key: `client-profile-${clientId}`,
+    default: () => null,
+  }
+);
 
 async function share() {
   navigator.clipboard.writeText(

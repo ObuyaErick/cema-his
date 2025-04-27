@@ -9,9 +9,12 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
+  const clientProfileRegex =
+    /^\/api\/clients\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   const publicRoutes = ["/api/auth/login", "/api/auth/register"];
 
-  if (publicRoutes.includes(path)) {
+  if (publicRoutes.includes(path) || clientProfileRegex.test(path)) {
     return;
   }
 

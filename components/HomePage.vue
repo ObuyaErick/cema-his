@@ -45,6 +45,14 @@
             size="lg"
             class="shadow shadow-black/40"
             color="primary"
+            to="/users"
+          >
+            Manage Users
+          </UButton>
+          <UButton
+            size="lg"
+            class="shadow shadow-black/40"
+            color="primary"
             to="/programs"
           >
             Manage Programs

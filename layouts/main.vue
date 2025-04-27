@@ -39,9 +39,24 @@
           ></AnimatedMenu>
         </UButton>
 
-        <div class="grow flex justify-end">
+        <div class="grow flex justify-end space-x-4">
+          <ThemeSwitcher></ThemeSwitcher>
+          <UButton
+            v-if="authStore.loggedIn"
+            @click="logout"
+            trailing-icon="i-lucide-log-out"
+            class="shadow shadow-black/40"
+            >Logout</UButton
+          >
+          <UButton
+            v-else
+            to="/login"
+            trailing-icon="i-lucide-log-out"
+            class="shadow shadow-black/40"
+            >Login</UButton
+          >
           <UAvatar
-            class="bg-(--ui-bg-inverted)"
+            class="border border-(--ui-border-accented)"
             :src="authStore.name || ''"
             :alt="authStore?.name ?? ''"
           ></UAvatar>
@@ -55,9 +70,13 @@
 </template>
 
 <script setup lang="ts">
+import { LOGOUT_ACTION_KEY } from "~/shared/utils/keys";
+
 const authStore = useAuthStore();
 const appStore = useAppStore();
 const sideNavOpen = ref(false);
+
+const logout = inject<() => void>(LOGOUT_ACTION_KEY);
 
 onMounted(async () => {
   appStore.setBusy(true);

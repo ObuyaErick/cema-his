@@ -24,6 +24,7 @@
               description="program registration"
             >
               <UButton
+                class="shadow shadow-black/40"
                 icon="i-lucide-plus"
                 label="Add Program"
                 color="primary"

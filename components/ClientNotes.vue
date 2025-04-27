@@ -23,12 +23,12 @@
         <UAlert
           color="warning"
           variant="outline"
-          class="shadow"
+          class="shadow mt-3"
           icon="i-lucide-triangle-alert"
-          title="403"
+          title="403 Forbidden Access"
         >
-          <template #body
-            >Only doctors and this related client can view doctor's
+          <template #description
+            >Only doctors and this very client can view doctor's
             notes.</template
           >
         </UAlert>

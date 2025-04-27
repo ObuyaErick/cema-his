@@ -10,85 +10,9 @@
       <UCard class="mb-6 shadow light:bg-white">
         <template #header>
           <div class="flex justify-between items-center">
-            <h1 class="text-xl font-semibold">Clients</h1>
-            <USlideover
-              :ui="{
-                content: 'max-w-lg top-8 mx-auto rounded-t-lg',
-              }"
-              close-icon="i-lucide-chevron-down"
-              side="bottom"
-              :overlay="false"
-              v-model:open="createClientSlideOverOpen"
-              title="New Client"
-              aria-describedby="New client registration"
-              description="client registration"
-            >
-              <UButton
-                class="shadow shadow-black/40"
-                icon="i-lucide-plus"
-                label="Add Client"
-                color="primary"
-              />
-              <template #body>
-                <ClientRegistrationForm
-                  @cancelling="createClientSlideOverOpen = false"
-                  @done="
-                    () => {
-                      createClientSlideOverOpen = false;
-                      refresh();
-                    }
-                  "
-                ></ClientRegistrationForm>
-              </template>
-            </USlideover>
+            <h1 class="text-xl font-semibold">Users</h1>
           </div>
         </template>
-
-        <!-- Filters Modal -->
-        <UModal
-          description="Advanced client filters"
-          title="Client Filters"
-          aria-describedby="Filters"
-          v-model:open="isFilterOpen"
-          close
-        >
-          <template #body>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-              <UFormField class="grow" label="Gender">
-                <USelect
-                  class="w-full"
-                  v-model="filters.gender"
-                  :items="genderOptions"
-                  placeholder="All genders"
-                  clearable
-                />
-              </UFormField>
-              <UFormField label="Date From">
-                <UInput class="w-full" v-model="filters.dateFrom" type="date" />
-              </UFormField>
-              <UFormField label="Date To">
-                <UInput class="w-full" v-model="filters.dateTo" type="date" />
-              </UFormField>
-            </div>
-            <div class="flex justify-end p-4 gap-4">
-              <UButton
-                color="neutral"
-                icon="i-lucide-rotate-ccw"
-                variant="outline"
-                @click="resetFilters"
-              >
-                Reset
-              </UButton>
-              <UButton
-                class="text-gray-200"
-                color="primary"
-                @click="applyFilters"
-              >
-                Apply Filters
-              </UButton>
-            </div>
-          </template>
-        </UModal>
 
         <!-- Search & Filters -->
         <div class="">
@@ -113,24 +37,14 @@
               :loading="deletingSelected"
               >Delete Selected</UButton
             >
-
-            <!-- Filters -->
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="lg"
-              icon="i-lucide-funnel"
-              @click="isFilterOpen = true"
-              >Filters</UButton
-            >
           </UButtonGroup>
         </div>
 
-        <!-- Clients Table -->
+        <!-- Users Table -->
         <div class="grid">
           <UTable
             :ui="{ root: 'horizontal-scrollbar' }"
-            v-if="clients"
+            v-if="users"
             @select="
               (row) => {
                 row.toggleSelected(!row.getIsSelected());
@@ -140,74 +54,69 @@
             v-model:expanded="expanded"
             v-model:row-selection="rowSelection"
             :columns="columns"
-            :data="clients.data"
+            :data="users.data"
             :loading="tableLoading || status === 'pending'"
-            empty="No clients found"
+            empty="No users found"
           >
-            <template #expanded="{ row: { original: client } }">
-              <UCard>
-                <div class="grid gap-2">
-                  <div class="flex flex-wrap gap-2">
-                    <div
-                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+            <template #expanded="{ row: { original: user } }">
+              <div class="grid">
+                <div class="flex flex-wrap gap-2 items-center">
+                  <div class="px-3 py-1">
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-calendar-clock"></UIcon
+                      >Registration Date</span
                     >
-                      <span class="flex items-center gap-2"
-                        ><UIcon name="i-lucide-circle-user"></UIcon>Full
-                        Name</span
-                      >
-                      <div class="font-bold">
-                        {{ client.firstName }} {{ client.lastName }}
-                      </div>
-                    </div>
-                    <div
-                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                    >
-                      <span class="flex items-center gap-2"
-                        ><UIcon name="i-lucide-calendar-days"></UIcon>Date of
-                        Birth</span
-                      >
-                      <div class="font-bold">
-                        {{ new Date(client.dateOfBirth).toDateString() }}
-                      </div>
-                    </div>
-                    <div
-                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                    >
-                      <span class="flex items-center gap-2"
-                        ><UIcon name="i-lucide-map-pin-house"></UIcon
-                        >Address</span
-                      >
-                      <div class="font-bold">{{ client.address }}</div>
-                    </div>
-                    <div
-                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                    >
-                      <span class="flex items-center gap-2"
-                        ><UIcon name="i-lucide-calendar-clock"></UIcon
-                        >Registration Date</span
-                      >
-                      <div class="font-bold">
-                        {{ new Date(client.createdAt).toDateString() }}
-                      </div>
+                    <div class="font-bold">
+                      {{ new Date(user.createdAt).toDateString() }}
                     </div>
                   </div>
-                  <USeparator></USeparator>
-                  <div>
-                    <h4>Programs</h4>
-                    <div class="flex gap-2">
-                      <UBadge
-                        v-for="healthProgram in client.programs"
-                        color="neutral"
-                        variant="outline"
-                        >{{ healthProgram.name }}</UBadge
-                      >
+                  <div class="px-3 py-1">
+                    <span class="flex items-center gap-2"
+                      ><UIcon name="i-lucide-calendar-clock"></UIcon>Last
+                      Update</span
+                    >
+                    <div class="font-bold">
+                      {{ new Date(user.updatedAt).toDateString() }}
                     </div>
                   </div>
+
+                  <UButton
+                    @click="() => editRoleFor(user.id)"
+                    class="px-4 shadow shadow-black/40"
+                    >Modify Role</UButton
+                  >
                 </div>
-              </UCard>
+              </div>
             </template>
           </UTable>
         </div>
+
+        <!-- Role modification modal -->
+        <UModal
+          title="Modify"
+          aria-describedby="role modification modal"
+          description="assign role"
+          v-model:open="modifyingRoleModalOpen"
+          close
+        >
+          <template #body>
+            <div class="space-y-3">
+              <USelect
+                class="w-full"
+                v-model="newRole.role"
+                :items="['none', 'doctor', 'client']"
+              ></USelect>
+              <UButton
+                @click="submitModification"
+                :loading="modifyingRole"
+                class="shadow shadow-black/40"
+                block
+                icon="i-lucide-save"
+                >Save Changes</UButton
+              >
+            </div>
+          </template>
+        </UModal>
 
         <!-- Pagination -->
         <div class="mt-4 flex justify-between items-center">
@@ -258,12 +167,12 @@
 </template>
 
 <script setup lang="ts">
+import { UButton, UModal, USelect, USelectMenu } from "#components";
 import type { TableColumn } from "@nuxt/ui";
-import type { Client, HealthProgram } from "~/generated/prisma";
 import type { Column, Row } from "@tanstack/vue-table";
 import type { Paginated } from "~/shared/types/pagination.types";
+import type { UIUser } from "~/shared/types/users.types";
 
-type ClientWithHealthPrograms = Client & { programs: HealthProgram[] };
 const authStore = useAuthStore();
 const table = useTemplateRef("table");
 const tableLoading = ref(false);
@@ -273,19 +182,12 @@ const deletingSelected = ref(false);
 const searchQuery = ref("");
 const currentPage = ref(1);
 const limit = ref(10);
-const isFilterOpen = ref(false);
-const createClientSlideOverOpen = ref(false);
-const filters = ref({
-  gender: "",
-  dateFrom: "",
-  dateTo: "",
-});
 const reqFilters = ref<Record<string, string>>({});
 const {
-  data: clients,
+  data: users,
   status,
   refresh,
-} = useFetch<Paginated<ClientWithHealthPrograms>>("/api/clients", {
+} = useFetch<Paginated<UIUser>>("/api/users", {
   query: {
     limit,
     page: currentPage,
@@ -294,18 +196,56 @@ const {
   },
 });
 
-// Constants
-const genderOptions = shallowRef([
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
-  { label: "Other", value: "Other" },
-]);
-
 const expanded = ref<Record<number, boolean>>();
 const rowSelection = ref<Record<number, boolean>>({});
 
+const newRole = ref<{ user: string; role: string }>({ user: "", role: "" });
+
+const modifyingRoleModalOpen = ref(false);
+const modifyingRole = ref(false);
+
+const editRoleFor = (id: string) => {
+  const usr = users.value?.data?.find((usr) => usr.id === id);
+
+  if (usr) {
+    newRole.value = { user: usr.id, role: usr.role ?? "none" };
+  }
+
+  modifyingRoleModalOpen.value = true;
+};
+
+const submitModification = async () => {
+  modifyingRole.value = true;
+  await $fetch(`/api/users/${newRole.value.user}`, {
+    method: "PATCH",
+    body: { role: newRole.value.role },
+  })
+    .then((res) => {
+      useToast().add({
+        title: "Success",
+        description: res.message || "User's role modified",
+        color: "success",
+      });
+      refresh();
+      modifyingRoleModalOpen.value = false;
+    })
+    .catch((error) => {
+      useToast().add({
+        title: "Error",
+        description:
+          error?.response?._data?.message ||
+          error.message ||
+          "Failed to update user's role'",
+        color: "error",
+      });
+    })
+    .finally(() => {
+      modifyingRole.value = false;
+    });
+};
+
 // Table columns
-const columns = shallowRef<TableColumn<ClientWithHealthPrograms>[]>([
+const columns = shallowRef<TableColumn<UIUser>[]>([
   {
     id: "select",
     header: ({ table }) =>
@@ -343,35 +283,28 @@ const columns = shallowRef<TableColumn<ClientWithHealthPrograms>[]>([
         onClick: () => row.toggleExpanded(),
       }),
   },
+
   {
-    accessorKey: "firstName",
-    header: ({ column }) => sortableHeader(column, "FirstName"),
-  },
-  {
-    accessorKey: "lastName",
-    header: ({ column }) => sortableHeader(column, "LastName"),
+    accessorKey: "name",
+    header: ({ column }) => sortableHeader(column, "Name"),
   },
   {
     accessorKey: "email",
     header: ({ column }) => sortableHeader(column, "Email"),
   },
   {
-    accessorKey: "contactNumber",
-    header: "Phone",
-  },
-  {
-    accessorKey: "gender",
-    header: "Gender",
+    accessorKey: "role",
+    header: "Role",
     cell: ({ row }) => {
       const color = {
-        Male: "primary" as const,
-        Female: "warning" as const,
-      }[row.getValue("gender") as string];
+        doctor: "info" as const,
+        client: "neutral" as const,
+      }[row.getValue("role") as string];
 
       return h(
         resolveComponent("UBadge"),
         { class: "capitalize", variant: "subtle", color },
-        () => row.getValue("gender")
+        () => row.getValue("role")
       );
     },
   },
@@ -404,10 +337,7 @@ const columns = shallowRef<TableColumn<ClientWithHealthPrograms>[]>([
   },
 ]);
 
-function sortableHeader(
-  column: Column<ClientWithHealthPrograms>,
-  label: string
-) {
+function sortableHeader(column: Column<UIUser>, label: string) {
   const isSorted = column.getIsSorted();
 
   return h(resolveComponent("UButton"), {
@@ -424,19 +354,19 @@ function sortableHeader(
   });
 }
 
-function getRowItems(row: Row<ClientWithHealthPrograms>) {
+function getRowItems(row: Row<UIUser>) {
   return [
     {
       type: "label",
       label: "Actions",
     },
     {
-      label: "Copy client's ID",
+      label: "Copy user's ID",
       icon: "i-lucide-copy",
       onSelect() {
         navigator.clipboard.writeText(row.original.id);
         useToast().add({
-          title: "Copied client's ID to clipboard!",
+          title: "Copied user's ID to clipboard!",
           color: "success",
           icon: "i-lucide-circle-check",
         });
@@ -445,29 +375,20 @@ function getRowItems(row: Row<ClientWithHealthPrograms>) {
     {
       type: "separator",
     },
-    {
-      label: "View client's details",
-      icon: "i-lucide-book-user",
-      to: `/clients/${row.original.id}`,
-    },
-    {
-      label: "Add Program",
-      icon: "i-lucide-package-plus",
-      to: `/clients/${row.original.id}#enrolled_programs`,
-    },
+
     {
       type: "separator",
     },
     {
-      label: "Delete client",
+      label: "Delete user",
       icon: "i-lucide-trash",
       onSelect() {
         tableLoading.value = true;
-        deleteClients([row?.original?.id])
+        deleteUsers([row?.original?.id])
           .catch((error) => {
             useToast().add({
               title: "Failed",
-              description: error.message || "Failed to delete client",
+              description: error.message || "Failed to delete user",
               color: "error",
             });
           })
@@ -481,46 +402,22 @@ function getRowItems(row: Row<ClientWithHealthPrograms>) {
 
 // Pagination information
 const paginationInfo = computed(() => {
-  const limit = Number(clients.value?.limit ?? 10);
-  const from = (Number(clients.value?.page ?? 1) - 1) * limit + 1;
+  const limit = Number(users.value?.limit ?? 10);
+  const from = (Number(users.value?.page ?? 1) - 1) * limit + 1;
   const end = from + limit - 1;
-  const total = Number(clients.value?.total ?? 0);
+  const total = Number(users.value?.total ?? 0);
   const to = end > total ? total : end;
   const pageCount = Math.ceil(total / limit);
   return { from, to, total, limit, pageCount };
 });
 
-// Filter handlers
-const resetFilters = () => {
-  filters.value = {
-    gender: "",
-    dateFrom: "",
-    dateTo: "",
-  };
-  resetPage();
-};
-
-const applyFilters = () => {
-  resetPage();
-  reqFilters.value = Object.entries(filters.value).reduce(
-    (acc, [key, value]) => {
-      if (value) {
-        acc[key] = value;
-      }
-      return acc;
-    },
-    {} as Record<string, string>
-  );
-  refresh();
-};
-
 const resetPage = () => {
   currentPage.value = 1;
 };
 
-const deleteClients = async (ids: (string | number)[]) => {
+const deleteUsers = async (ids: (string | number)[]) => {
   if (ids.length) {
-    await $fetch("/api/clients/delete-bulk", {
+    await $fetch("/api/users/delete-bulk", {
       method: "DELETE",
       body: {
         ids,
@@ -530,7 +427,7 @@ const deleteClients = async (ids: (string | number)[]) => {
         title: "Success",
         description:
           res.message ||
-          `${ids.length ? "Client" : "Clients"} deleted successfully`,
+          `${ids.length ? "User" : "Users"} deleted successfully`,
         color: "success",
       });
       refresh();
@@ -547,11 +444,9 @@ const deleteClients = async (ids: (string | number)[]) => {
 
 const deleteSelected = async () => {
   const ids = Object.keys(rowSelection.value);
-  if (clients.value?.data && ids.length) {
+  if (users.value?.data && ids.length) {
     deletingSelected.value = true;
-    await deleteClients(
-      ids.map((index) => clients.value!.data[Number(index)].id)
-    )
+    await deleteUsers(ids.map((index) => users.value!.data[Number(index)].id))
       .catch((error) => {
         useToast().add({
           title: "Failed",

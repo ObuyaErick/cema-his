@@ -21,5 +21,25 @@
 </template>
 
 <script setup lang="ts">
+import { LOGOUT_ACTION_KEY } from './shared/utils/keys';
+
 const appStore = useAppStore();
+const authStore = useAuthStore();
+
+const logout = () => {
+  appStore.setBusy(true);
+
+  authStore
+    .logout()
+    .then((res) => {
+      useToast().add({
+        color: res.status,
+        title: res.status === "success" ? "Success" : "Failed",
+        description: res.message,
+      });
+    })
+    .finally(() => appStore.setBusy(false));
+};
+
+provide(LOGOUT_ACTION_KEY, logout);
 </script>

@@ -1,3 +1,4 @@
+import { hashSync } from "bcrypt";
 import prisma from "~/lib/prisma";
 import { ClientRegistrationSchema } from "~/shared/types/clients.types";
 
@@ -18,6 +19,17 @@ export default defineEventHandler(async (event) => {
       programIds = [],
     } = body;
 
+    // Create login record for client
+    const user = await prisma.user.create({
+      data: {
+        name: `${firstName} ${lastName}`,
+        email: email.trim(),
+        role: "client",
+        // Default password is the provided email
+        password: hashSync(email.trim(), 10),
+      },
+    });
+
     // Create client
     await prisma.client.create({
       data: {
@@ -28,6 +40,7 @@ export default defineEventHandler(async (event) => {
         contactNumber,
         email,
         address,
+        userId: user.id,
         enrollments: {
           create: programIds.map((programId) => ({
             healthProgram: {
@@ -46,7 +59,8 @@ export default defineEventHandler(async (event) => {
     });
 
     return {
-      message: "Client registration successful",
+      message:
+        "Client registration successful. Use your email as your password to log in.",
     };
   } catch (error) {
     throw createError({
