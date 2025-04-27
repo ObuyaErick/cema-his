@@ -54,6 +54,6 @@ Use the following email and password
     task clean
 ```
 
-Below is a link to a video demonstrating various user roles:
+Below is a link to a video demonstrating various user roles and functionalities:
 
-[Live Demo](https://drive.google.com/file/d/15wexXzJpQb3tp0hTc5qGoBkghIpj6c8L/view?usp=sharing)
+[Live Demo](https://drive.google.com/file/d/1dDBkWOFfB5RUTUqtII7KKun4p4HC7GC4/view?usp=sharing)
