@@ -20,21 +20,5 @@ services:
       timeout: 5s
       retries: 5
 
-  nuxt:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cema_his_nuxt
-    ports:
-      - "3000:3000"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: "postgresql://user_postgres:password_postgres@postgres:5432/db_postgres"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - cema_network
-
 networks:
   cema_network: {}

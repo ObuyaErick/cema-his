@@ -4,7 +4,12 @@ tasks:
   start:
     desc: "Start the Docker services"
     cmds:
-      - sudo docker-compose -f docker-compose.yml up --build 
+      - sudo docker-compose -f docker-compose.yml up --build
+
+  "start:dev":
+    desc: "Start the postgres container"
+    cmds:
+      - sudo docker-compose -f docker-compose.dev.yml up --build
 
   stop:
     desc: "Stop the Docker services"
