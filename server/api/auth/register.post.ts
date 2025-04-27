@@ -1,10 +1,10 @@
-import bcrypt from "bcrypt";
+import { hashSync } from "bcrypt";
 import { User } from "~/generated/prisma";
 import prisma from "~/lib/prisma";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { email, password, name, role = "client" } = body;
+  const { email, password, name } = body;
 
   let user: User | null = await prisma.user.findUnique({
     where: { email },
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Hashing password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = hashSync(password, 10);
 
   // Creating new user
   user = await prisma.user
@@ -27,7 +27,6 @@ export default defineEventHandler(async (event) => {
         email,
         password: hashedPassword,
         name,
-        role,
       },
     })
     .catch((_error) => {

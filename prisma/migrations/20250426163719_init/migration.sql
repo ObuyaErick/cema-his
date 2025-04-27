@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
     "password" TEXT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Client" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE "Client" (
 
 -- CreateTable
 CREATE TABLE "HealthProgram" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -40,13 +40,25 @@ CREATE TABLE "HealthProgram" (
 
 -- CreateTable
 CREATE TABLE "Enrollment" (
-    "id" SERIAL NOT NULL,
-    "clientId" INTEGER NOT NULL,
-    "healthProgramId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "clientId" TEXT NOT NULL,
+    "healthProgramId" TEXT NOT NULL,
     "enrollmentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Enrollment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Note" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "enrollmentId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Note_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -63,3 +75,6 @@ ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_clientId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Enrollment" ADD CONSTRAINT "Enrollment_healthProgramId_fkey" FOREIGN KEY ("healthProgramId") REFERENCES "HealthProgram"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Note" ADD CONSTRAINT "Note_enrollmentId_fkey" FOREIGN KEY ("enrollmentId") REFERENCES "Enrollment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

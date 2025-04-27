@@ -1,5 +1,5 @@
-import { compareSync, hashSync } from "bcrypt";
-import * as jwt from "jsonwebtoken";
+import { compareSync } from "bcrypt";
+import jwt from "jsonwebtoken";
 import prisma from "~/lib/prisma";
 
 export default defineEventHandler(async (event) => {
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     });
 
   // Check if passwords are matching
-  const passwordsMatch = compareSync(hashSync(password, 10), user.password);
+  const passwordsMatch = compareSync(password, user.password);
 
   if (!passwordsMatch) {
     throw createError({
@@ -35,12 +35,12 @@ export default defineEventHandler(async (event) => {
   // Create a JWT token expiring in after 3 hours from the time of creation
   const token = jwt.sign(
     {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       role: user.role,
     },
     runtimeConfig.jwtSecret,
-    { expiresIn: "3Hours" }
+    { expiresIn: "3h" }
   );
 
   setCookie(event, "session", token, {

@@ -15,17 +15,19 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   email     String   @unique
   name      String?
   password  String
   role      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  clients Client[]
 }
 
 model Client {
-  id               Int       @id @default(autoincrement())
+  id               String       @id @default(uuid())
   firstName        String
   lastName         String
   dateOfBirth      DateTime
@@ -35,11 +37,15 @@ model Client {
   address          String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  enrollments      Enrollment[]
+
+  user             User        @relation(fields: [userId], references: [id])
+  userId           String
+
+  enrollments      Enrollment[]            
 }
 
 model HealthProgram {
-  id          Int       @id @default(autoincrement())
+  id          String       @id @default(uuid())
   name        String    @unique
   description String?
   createdAt DateTime  @default(now())
@@ -48,11 +54,11 @@ model HealthProgram {
 }
 
 model Enrollment {
-  id              Int           @id @default(autoincrement()) 
+  id              String           @id @default(uuid()) 
   client          Client        @relation(fields: [clientId], references: [id])
-  clientId        Int
+  clientId        String
   healthProgram   HealthProgram @relation(fields: [healthProgramId], references: [id])
-  healthProgramId Int
+  healthProgramId String
   enrollmentDate  DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -62,11 +68,11 @@ model Enrollment {
 }
 
 model Note {
-  id            Int           @id @default(autoincrement()) 
+  id            String           @id @default(uuid()) 
   title         String
   content       String
   enrollment    Enrollment @relation(fields: [enrollmentId], references: [id])
-  enrollmentId  Int
+  enrollmentId  String
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }

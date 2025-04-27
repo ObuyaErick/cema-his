@@ -1,14 +1,15 @@
 import prisma from "~/lib/prisma";
+import normalizePaginationParams from "~/shared/utils/normalize-pagination-params";
 
 /**
  * Retrieve a list of offered health programs
  */
 export default defineEventHandler(async (event) => {
-  // Handle GET request - List programs
-
   const query = getQuery(event);
-  const page = Number(query.page) || 1;
-  const limit = Number(query.limit) || 10;
+  const { page: oneBasedPage, limit } = normalizePaginationParams(query, {
+    limit: 10,
+  });
+  const zeroBasedPage = oneBasedPage - 1;
   const search = query.search as string;
   const dateFrom = query.dateFrom as string;
   const dateTo = query.dateTo as string;
@@ -39,7 +40,7 @@ export default defineEventHandler(async (event) => {
   // Get paginated data
   const data = await prisma.healthProgram.findMany({
     where: filters,
-    skip: (page - 1) * limit,
+    skip: zeroBasedPage * limit,
     take: limit,
     orderBy: {
       name: "asc",
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     data,
-    page,
+    page: oneBasedPage,
     limit,
     total,
   };

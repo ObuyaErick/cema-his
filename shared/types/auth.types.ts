@@ -1,8 +1,9 @@
 import type { User } from "~/generated/prisma";
 import * as z from "zod";
 
-export interface AuthenticationContext {
-  principal: User;
+export interface AuthenticationContext
+  extends Omit<User, "password" | "createdAt" | "updatedAt"> {
+    authClientId?: string | null;
 }
 
 export const loginSchema = z.object({

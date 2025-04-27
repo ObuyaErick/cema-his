@@ -1,222 +1,236 @@
 <template>
-  <div class="grid">
-    <UCard class="mb-6 shadow light:bg-white">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h1 class="text-xl font-semibold">Health Programs</h1>
-          <USlideover
-            :ui="{
-              content: 'max-w-lg top-8 mx-auto rounded-t-lg',
-            }"
-            close-icon="i-lucide-chevron-down"
-            side="bottom"
-            :overlay="false"
-            v-model:open="createProgramSlideOverOpen"
-            title="New Health Program"
-            aria-describedby="New health program registration"
-            description="program registration"
-          >
-            <UButton icon="i-lucide-plus" label="Add Program" color="primary" />
-            <template #body>
-              <ProgramRegistrationForm
-                @cancelling="createProgramSlideOverOpen = false"
-                @done="
-                  () => {
-                    createProgramSlideOverOpen = false;
-                    refresh();
-                  }
-                "
-              ></ProgramRegistrationForm>
-            </template>
-          </USlideover>
-        </div>
-      </template>
-
-      <!-- Filters Modal -->
-      <UModal
-        description="Advanced program filters"
-        title="Program Filters"
-        aria-describedby="Filters"
-        v-model:open="isFilterOpen"
-        close
-      >
-        <template #body>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-            <UFormField label="Date From">
-              <UInput class="w-full" v-model="filters.dateFrom" type="date" />
-            </UFormField>
-            <UFormField label="Date To">
-              <UInput class="w-full" v-model="filters.dateTo" type="date" />
-            </UFormField>
-          </div>
-          <div class="flex justify-end p-4 gap-4">
-            <UButton
-              color="neutral"
-              icon="i-lucide-rotate-ccw"
-              variant="outline"
-              @click="resetFilters"
+  <RestrictedContent
+    :unless="authStore.role === 'doctor'"
+    :ui="{
+      fallback:
+        'w-full border px-6 py-8 mx-auto border-(--ui-border-accented) rounded-lg space-y-4',
+    }"
+  >
+    <div class="grid">
+      <UCard class="mb-6 shadow light:bg-white">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h1 class="text-xl font-semibold">Health Programs</h1>
+            <USlideover
+              :ui="{
+                content: 'max-w-lg top-8 mx-auto rounded-t-lg',
+              }"
+              close-icon="i-lucide-chevron-down"
+              side="bottom"
+              :overlay="false"
+              v-model:open="createProgramSlideOverOpen"
+              title="New Health Program"
+              aria-describedby="New health program registration"
+              description="program registration"
             >
-              Reset
-            </UButton>
-            <UButton
-              class="text-gray-200"
-              color="primary"
-              @click="applyFilters"
-            >
-              Apply Filters
-            </UButton>
+              <UButton
+                icon="i-lucide-plus"
+                label="Add Program"
+                color="primary"
+              />
+              <template #body>
+                <ProgramRegistrationForm
+                  @cancelling="createProgramSlideOverOpen = false"
+                  @done="
+                    () => {
+                      createProgramSlideOverOpen = false;
+                      refresh();
+                    }
+                  "
+                ></ProgramRegistrationForm>
+              </template>
+            </USlideover>
           </div>
         </template>
-      </UModal>
 
-      <!-- Search & Filters -->
-      <div class="">
-        <!-- Search -->
-        <UButtonGroup class="w-full">
-          <UInput
-            class="grow"
-            size="lg"
-            v-model="searchQuery"
-            placeholder="Search by program name..."
-            icon="i-lucide-search"
-            @input="resetPage"
-          />
-
-          <UButton
-            icon="i-lucide-trash"
-            :disabled="!Object.entries(rowSelection).length"
-            size="lg"
-            color="neutral"
-            variant="outline"
-            @click="deleteSelected"
-            :loading="deletingSelected"
-            >Delete Selected</UButton
-          >
-
-          <!-- Filters -->
-          <UButton
-            color="neutral"
-            variant="outline"
-            size="lg"
-            icon="i-lucide-funnel"
-            @click="isFilterOpen = true"
-            >Filters</UButton
-          >
-        </UButtonGroup>
-      </div>
-
-      <!-- Programs Table -->
-      <div class="grid">
-        <UTable
-          :ui="{ root: 'horizontal-scrollbar' }"
-          v-if="programs"
-          @select="
-            (row) => {
-              row.toggleSelected(!row.getIsSelected());
-            }
-          "
-          ref="table"
-          v-model:expanded="expanded"
-          v-model:row-selection="rowSelection"
-          :columns="columns"
-          :data="programs.data"
-          :loading="tableLoading || status === 'pending'"
-          empty="No programs found"
+        <!-- Filters Modal -->
+        <UModal
+          description="Advanced program filters"
+          title="Program Filters"
+          aria-describedby="Filters"
+          v-model:open="isFilterOpen"
+          close
         >
-          <template #expanded="{ row: { original: program } }">
-            <UCard>
-              <div class="grid gap-2">
-                <div class="flex flex-wrap gap-2">
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-stethoscope"></UIcon>Program
-                      Name</span
-                    >
-                    <div class="font-bold">
-                      {{ program.name }}
-                    </div>
-                  </div>
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-calendar-clock"></UIcon>Created
-                      Date</span
-                    >
-                    <div class="font-bold">
-                      {{ new Date(program.createdAt).toDateString() }}
-                    </div>
-                  </div>
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-users"></UIcon>Enrolled
-                      Clients</span
-                    >
-                    <div class="font-bold">
-                      {{ program._count?.enrollments || 0 }}
-                    </div>
-                  </div>
-                </div>
-                <USeparator></USeparator>
-                <div>
-                  <h4>Description</h4>
-                  <p class="text-sm text-gray-600 mt-1">
-                    {{ program.description || "No description available" }}
-                  </p>
-                </div>
-              </div>
-            </UCard>
+          <template #body>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+              <UFormField label="Date From">
+                <UInput class="w-full" v-model="filters.dateFrom" type="date" />
+              </UFormField>
+              <UFormField label="Date To">
+                <UInput class="w-full" v-model="filters.dateTo" type="date" />
+              </UFormField>
+            </div>
+            <div class="flex justify-end p-4 gap-4">
+              <UButton
+                color="neutral"
+                icon="i-lucide-rotate-ccw"
+                variant="outline"
+                @click="resetFilters"
+              >
+                Reset
+              </UButton>
+              <UButton
+                class="text-gray-200"
+                color="primary"
+                @click="applyFilters"
+              >
+                Apply Filters
+              </UButton>
+            </div>
           </template>
-        </UTable>
-      </div>
+        </UModal>
 
-      <!-- Pagination -->
-      <div class="mt-4 flex justify-between items-center">
-        <div class="text-sm">
-          Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
-          {{ paginationInfo.total }} entries
-        </div>
-        <UPagination
-          v-model:page="currentPage"
-          size="xs"
-          :items-per-page="limit"
-          :total="paginationInfo.total"
-        />
-      </div>
-      <div
-        class="py-2 mt-2 border-t border-(--ui-border-accented) text-sm text-muted flex justify-between"
-      >
-        <div>
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }}
-          of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}
-          program(s) selected.
-        </div>
+        <!-- Search & Filters -->
         <div class="">
-          <UButtonGroup>
-            <USelect
-              class="w-20"
-              v-model="limit"
-              :items="
-                [5, 10, 15, 20, 25, 50, 75, 100].map((count) => ({
-                  label: `${count}`,
-                  value: count,
-                }))
-              "
+          <!-- Search -->
+          <UButtonGroup class="w-full">
+            <UInput
+              class="grow"
+              size="lg"
+              v-model="searchQuery"
+              placeholder="Search by program name..."
+              icon="i-lucide-search"
+              @input="resetPage"
+            />
+
+            <UButton
+              icon="i-lucide-trash"
+              :disabled="!Object.entries(rowSelection).length"
+              size="lg"
+              color="neutral"
+              variant="outline"
+              @click="deleteSelected"
+              :loading="deletingSelected"
+              >Delete Selected</UButton
             >
-            </USelect>
-            <UButton color="neutral" variant="outline"
-              >Programs per page</UButton
+
+            <!-- Filters -->
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="lg"
+              icon="i-lucide-funnel"
+              @click="isFilterOpen = true"
+              >Filters</UButton
             >
           </UButtonGroup>
         </div>
-      </div>
-    </UCard>
-  </div>
+
+        <!-- Programs Table -->
+        <div class="grid">
+          <UTable
+            :ui="{ root: 'horizontal-scrollbar' }"
+            v-if="programs"
+            @select="
+              (row) => {
+                row.toggleSelected(!row.getIsSelected());
+              }
+            "
+            ref="table"
+            v-model:expanded="expanded"
+            v-model:row-selection="rowSelection"
+            :columns="columns"
+            :data="programs.data"
+            :loading="tableLoading || status === 'pending'"
+            empty="No programs found"
+          >
+            <template #expanded="{ row: { original: program } }">
+              <UCard>
+                <div class="grid gap-2">
+                  <div class="flex flex-wrap gap-2">
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-stethoscope"></UIcon>Program
+                        Name</span
+                      >
+                      <div class="font-bold">
+                        {{ program.name }}
+                      </div>
+                    </div>
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-calendar-clock"></UIcon>Created
+                        Date</span
+                      >
+                      <div class="font-bold">
+                        {{ new Date(program.createdAt).toDateString() }}
+                      </div>
+                    </div>
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-users"></UIcon>Enrolled
+                        Clients</span
+                      >
+                      <div class="font-bold">
+                        {{ program._count?.enrollments || 0 }}
+                      </div>
+                    </div>
+                  </div>
+                  <USeparator></USeparator>
+                  <div>
+                    <h4>Description</h4>
+                    <p class="text-sm text-gray-600 mt-1">
+                      {{ program.description || "No description available" }}
+                    </p>
+                  </div>
+                </div>
+              </UCard>
+            </template>
+          </UTable>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 flex justify-between items-center">
+          <div class="text-sm">
+            Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
+            {{ paginationInfo.total }} entries
+          </div>
+          <UPagination
+            v-model:page="currentPage"
+            size="xs"
+            :items-per-page="limit"
+            :total="paginationInfo.total"
+          />
+        </div>
+        <div
+          class="py-2 mt-2 border-t border-(--ui-border-accented) text-sm text-muted flex justify-between"
+        >
+          <div>
+            {{
+              table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0
+            }}
+            of
+            {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}
+            program(s) selected.
+          </div>
+          <div class="">
+            <UButtonGroup>
+              <USelect
+                class="w-20"
+                v-model="limit"
+                :items="
+                  [5, 10, 15, 20, 25, 50, 75, 100].map((count) => ({
+                    label: `${count}`,
+                    value: count,
+                  }))
+                "
+              >
+              </USelect>
+              <UButton color="neutral" variant="outline"
+                >Programs per page</UButton
+              >
+            </UButtonGroup>
+          </div>
+        </div>
+      </UCard>
+    </div>
+  </RestrictedContent>
 </template>
 
 <script setup lang="ts">
@@ -255,7 +269,7 @@ const {
     ...reqFilters.value,
   },
 });
-
+const authStore = useAuthStore();
 const expanded = ref<Record<number, boolean>>();
 const rowSelection = ref<Record<number, boolean>>({});
 
@@ -395,7 +409,7 @@ function getRowItems(row: Row<HealthProgramWithCountedEnrollments>) {
       label: "Copy program ID",
       icon: "i-lucide-copy",
       onSelect() {
-        navigator.clipboard.writeText(String(row.original.id));
+        navigator.clipboard.writeText(row.original.id);
         useToast().add({
           title: "Copied program ID to clipboard!",
           color: "success",

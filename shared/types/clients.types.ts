@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Client, HealthProgram, Note } from "~/generated/prisma";
 
 export const clientRegistrationSchema = z.object({
   firstName: z.string().min(1, "first name is required"),
@@ -17,3 +18,14 @@ export const clientRegistrationSchema = z.object({
 export type ClientRegistrationSchema = z.output<
   typeof clientRegistrationSchema
 >;
+
+export type UIClientNotes = {
+  enrollmentId: string;
+  programId: string;
+  programName: string;
+  notes: Note[];
+};
+export type UIClientDetails = Client & {
+  programs: HealthProgram[];
+  notes: UIClientNotes[];
+};

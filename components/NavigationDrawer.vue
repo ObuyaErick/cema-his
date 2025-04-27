@@ -5,9 +5,22 @@
       arrow
       color="primary"
       variant="pill"
-      :items="navigationItems"
+      :items="
+        authStore.role === 'admin' ? navigationItems : [navigationItems[0], []]
+      "
     >
     </UNavigationMenu>
+
+    <UButton
+      :disabled="!authStore.authClientId"
+      v-if="authStore.role === 'client'"
+      :to="`/clients/${authStore.authClientId}/profile`"
+      size="lg"
+      variant="outline"
+      class="shadow mx-1"
+      icon="i-lucide-book-user"
+      >My Profile</UButton
+    >
     <div class="grow flex flex-col justify-end">
       <div class="flex gap-2 items-center">
         <ThemeSwitcher></ThemeSwitcher>
@@ -18,7 +31,9 @@
           icon="i-lucide-log-out"
           variant="soft"
           color="neutral"
-        ></UButton>
+          @click="() => logout()"
+          >Logout</UButton
+        >
       </div>
     </div>
   </div>
@@ -53,7 +68,7 @@ const navigationItems = ref<NavigationMenuItem[][]>([
     },
     {
       label: "Clients",
-      description: "View Clients",
+      description: "Clients",
       icon: "i-lucide-user",
       to: "/clients",
       onSelect: () => {
@@ -61,5 +76,24 @@ const navigationItems = ref<NavigationMenuItem[][]>([
       },
     },
   ],
+  [],
 ]);
+
+const authStore = useAuthStore();
+const appStore = useAppStore();
+
+const logout = () => {
+  appStore.setBusy(true);
+
+  authStore
+    .logout()
+    .then((res) => {
+      useToast().add({
+        color: res.status,
+        title: res.status === "success" ? "Success" : "Failed",
+        description: res.message,
+      });
+    })
+    .finally(() => appStore.setBusy(false));
+};
 </script>

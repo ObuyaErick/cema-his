@@ -5,8 +5,8 @@ import prisma from "~/lib/prisma";
  */
 export default defineEventHandler(async (event) => {
   try {
-    const id = Number(event.context.params?.id) ?? -1;
-    if (id < 0) {
+    const id = event.context.params?.id;
+    if (!id) {
       throw createError({
         statusCode: 400,
         message: "Invalid client id",

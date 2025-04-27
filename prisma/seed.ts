@@ -1,15 +1,28 @@
 import { faker } from "@faker-js/faker";
+import { hashSync } from "bcrypt";
 import prisma from "~/lib/prisma";
 
 // Number of clients to generate
-const NUM_CLIENTS = 50;
+const NUM_CLIENTS = 5;
 
 async function main() {
-  console.log("Starting to seed clients...");
+  console.log("Starting to seed...");
 
   // Delete existing records to prevent duplicate data on re-runs
   await prisma.client.deleteMany();
-  console.log("Cleared existing client records");
+  await prisma.user.deleteMany();
+  console.log("Cleared existing client and user records");
+
+  console.log("Seeding doctor");
+  await prisma.user.create({
+    data: {
+      name: "App Admin",
+      email: "admin@app.com",
+      password: hashSync("admin1234", 10),
+      role: "doctor",
+    },
+  });
+  console.log("Seeded doctor");
 
   const clients = [];
 
@@ -22,6 +35,15 @@ async function main() {
     const lastName = faker.person.lastName();
     const email = faker.internet.email({ firstName, lastName }).toLowerCase();
 
+    const clientUser = prisma.user.create({
+      data: {
+        name: `${firstName} ${lastName}`,
+        email,
+        password: hashSync(email, 10),
+        role: "client",
+      },
+    });
+
     const client = {
       firstName,
       lastName,
@@ -32,27 +54,7 @@ async function main() {
       address: faker.location.streetAddress({ useFullAddress: true }),
       createdAt: faker.date.between({ from: "2023-01-01", to: new Date() }),
       updatedAt: new Date(),
-    };
-
-    clients.push(client);
-  }
-
-  // Add a few non-binary/other gender clients for diversity
-  for (let i = 0; i < 5; i++) {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const email = faker.internet.email({ firstName, lastName }).toLowerCase();
-
-    const client = {
-      firstName,
-      lastName,
-      dateOfBirth: faker.date.birthdate({ min: 18, max: 80, mode: "age" }),
-      gender: "Other",
-      contactNumber: faker.phone.number(),
-      email,
-      address: faker.location.streetAddress({ useFullAddress: true }),
-      createdAt: faker.date.between({ from: "2023-01-01", to: new Date() }),
-      updatedAt: new Date(),
+      userId: (await clientUser).id,
     };
 
     clients.push(client);
@@ -68,10 +70,10 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Error seeding clients:', e)
-    process.exit(1)
+    console.error("Error seeding clients:", e);
+    process.exit(1);
   })
   .finally(async () => {
     // Close Prisma client connection
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

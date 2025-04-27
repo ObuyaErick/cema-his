@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
         enrollments: {
           create: programIds.map((programId) => ({
             healthProgram: {
-              connect: { id: Number(programId) },
+              connect: { id: programId },
             },
           })),
         },

@@ -5,8 +5,8 @@ import prisma from "~/lib/prisma";
  */
 export default defineEventHandler(async (event) => {
   try {
-    const id = Number(event.context.params?.id) ?? -1;
-    if (id < 0) {
+    const id = event.context.params?.id;
+    if (!id) {
       throw createError({
         statusCode: 400,
         message: "Invalid client id",
@@ -21,6 +21,11 @@ export default defineEventHandler(async (event) => {
           enrollments: {
             include: {
               healthProgram: true,
+              notes: {
+                orderBy: {
+                  createdAt: "desc",
+                },
+              },
             },
           },
         },
@@ -32,11 +37,19 @@ export default defineEventHandler(async (event) => {
         });
       });
 
+    const { enrollments, ...flatClient } = client;
+
     return {
-      ...client,
+      ...flatClient,
       programs: client.enrollments.map(
         (enrollment) => enrollment.healthProgram
       ),
+      notes: client.enrollments.map((enrollment) => ({
+        enrollmentId: enrollment.id,
+        programId: enrollment.healthProgramId,
+        programName: enrollment.healthProgram.name,
+        notes: enrollment.notes,
+      })),
     };
   } catch (error: any) {
     throw createError({

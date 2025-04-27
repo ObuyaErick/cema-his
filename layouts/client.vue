@@ -1,5 +1,5 @@
 <template>
-  <div class="">
+  <div class="p-2">
     <!-- Router Viewport -->
     <slot></slot>
 

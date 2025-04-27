@@ -86,26 +86,7 @@
       <USeparator></USeparator>
 
       <div>
-        <UFormField name="programIds" label="Programs" hint="Optional">
-          <USelectMenu
-            :search-input="{
-              placeholder: 'Search programs...',
-              icon: 'i-lucide-search',
-            }"
-            class="w-full"
-            v-model:search-term="programSearchQuery"
-            v-model="programIds"
-            :items="
-              programs?.data.map((prog) => ({
-                label: prog.name,
-                id: prog.id,
-              })) ?? []
-            "
-            multiple
-            placeholder="Select programs"
-          >
-          </USelectMenu>
-        </UFormField>
+        <ProgramFormField v-model="programIds" />
       </div>
     </div>
 
@@ -121,20 +102,31 @@
         color="neutral"
         >Cancel</UButton
       >
-      <UButton :loading="submitting" type="submit" color="primary"
-        >Register</UButton
-      >
+      <UButton :loading="submitting" type="submit" color="primary">{{
+        mode === "edit" ? "Save Changes" : "Register"
+      }}</UButton>
     </div>
   </UForm>
 </template>
 
 <script setup lang="ts">
-import type { FormSubmitEvent, SelectMenuItem } from "@nuxt/ui";
+import type { FormSubmitEvent } from "@nuxt/ui";
 
 import {
   clientRegistrationSchema,
   type ClientRegistrationSchema,
 } from "~/shared/types/clients.types";
+
+interface InitialClientDetails
+  extends Omit<ClientRegistrationSchema, "programIds"> {
+  programIds: { label: string; id: string }[];
+}
+
+const props = defineProps<{
+  mode?: "edit" | "create";
+  initial?: InitialClientDetails;
+  clientId?: string;
+}>();
 
 const emit = defineEmits<{
   (e: "cancelling"): void;
@@ -143,14 +135,6 @@ const emit = defineEmits<{
 const submitting = ref(false);
 
 const datePopoverOpen = ref(false);
-
-const programSearchQuery = ref("");
-
-const { data: programs, status } = useFetch("/api/health-programs", {
-  query: {
-    search: programSearchQuery,
-  },
-});
 
 const freshClientData = () => ({
   firstName: "",
@@ -162,7 +146,7 @@ const freshClientData = () => ({
   address: "",
 });
 
-const programIds = ref<{ label: string; id: number }[]>([]);
+const programIds = ref<{ label: string; id: string }[]>([]);
 
 // Form state
 const formState = ref<Partial<ClientRegistrationSchema>>(freshClientData());
@@ -182,32 +166,70 @@ const onSubmit = async (event: FormSubmitEvent<ClientRegistrationSchema>) => {
     dateOfBirth: event.data.dateOfBirth.toISOString(),
   };
   if (programIds.value?.length) {
-    clientData.programIds = programIds.value.map((p) => String(p.id));
+    clientData.programIds = programIds.value.map((p) => p.id);
   }
   submitting.value = true;
   // Send client data to the server
-  await $fetch("/api/clients", { method: "POST", body: clientData })
-    .then((res) => {
-      useToast().add({
-        title: "Success",
-        description: res.message || "Client registered successfully",
-        color: "success",
-      });
-      formState.value = freshClientData();
-      emit("done");
+  if (props.mode === "edit") {
+    const id: string = String(props.clientId);
+    await $fetch<{ message: string }>(`/api/clients/${id}`, {
+      method: "PATCH",
+      body: clientData,
     })
-    .catch((error) => {
-      useToast().add({
-        title: "Error",
-        description:
-          error?.response?._data?.message ||
-          error.message ||
-          "Failed to register client",
-        color: "error",
+      .then((res) => {
+        useToast().add({
+          title: "Success",
+          description: res.message || "Details updated successfully",
+          color: "success",
+        });
+        emit("done");
+      })
+      .catch((error) => {
+        useToast().add({
+          title: "Error",
+          description:
+            error?.response?._data?.message ||
+            error.message ||
+            "Failed to update client details",
+          color: "error",
+        });
+      })
+      .finally(() => {
+        submitting.value = false;
       });
-    })
-    .finally(() => {
-      submitting.value = false;
-    });
+  } else {
+    await $fetch("/api/clients", { method: "POST", body: clientData })
+      .then((res) => {
+        useToast().add({
+          title: "Success",
+          description: res.message || "Client registered successfully",
+          color: "success",
+        });
+        formState.value = freshClientData();
+        emit("done");
+      })
+      .catch((error) => {
+        useToast().add({
+          title: "Error",
+          description:
+            error?.response?._data?.message ||
+            error.message ||
+            "Failed to register client",
+          color: "error",
+        });
+      })
+      .finally(() => {
+        submitting.value = false;
+      });
+  }
 };
+
+onMounted(() => {
+  if (props.mode === "edit" && props.initial) {
+    const { programIds: initialPrograms, ...clientInitials } = props.initial;
+    formState.value = clientInitials;
+
+    programIds.value = initialPrograms;
+  }
+});
 </script>

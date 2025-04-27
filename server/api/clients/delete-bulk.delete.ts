@@ -1,17 +1,42 @@
 import prisma from "~/lib/prisma";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ ids: number[] }>(event);
+  const body = await readBody<{ ids: string[] }>(event);
+
   if (Array.isArray(body?.ids)) {
-    const deleted = await prisma.client.deleteMany({
+    // Find all enrollments for these clients
+    const enrollments = await prisma.enrollment.findMany({
+      where: { clientId: { in: body.ids } },
+      select: { id: true },
+    });
+
+    const enrollmentIds = enrollments.map((e) => e.id);
+
+    // Remove notes
+    await prisma.note.deleteMany({
+      where: {
+        enrollmentId: {
+          in: enrollmentIds,
+        },
+      },
+    });
+
+    // Remove any enrollments of this client
+    await prisma.enrollment.deleteMany({
+      where: {
+        clientId: {
+          in: body.ids,
+        },
+      },
+    });
+
+    const result = await prisma.client.deleteMany({
       where: { id: { in: body.ids } },
     });
 
     return {
-      message: deleted.count
-        ? `Successfully deleted ${deleted.count} client${
-            deleted.count > 1 ? "s" : ""
-          }`
+      message: result.count
+        ? `Successfully deleted ${result.count} client(s)`
         : "No record was deleted. Try selecting at least one",
     };
   }

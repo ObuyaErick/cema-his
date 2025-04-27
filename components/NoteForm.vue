@@ -1,122 +1,133 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-4">
-    <!-- Title -->
-    <UFormField label="Title" name="title" :error="errors.title" required>
-      <UInput v-model="formData.title" placeholder="Note Title" />
-    </UFormField>
-
-    <!-- Content -->
-    <UFormField label="Content" name="content" :error="errors.content" required>
-      <UTextarea
-        v-model="formData.content"
-        placeholder="Note content..."
-        rows="6"
-      />
-    </UFormField>
-
-    <!-- Category -->
-    <UFormField
-      label="Category (Optional)"
-      name="category"
-      :error="errors.category"
+  <div class="space-y-6">
+    <UForm
+      :schema="createNoteSchema"
+      :state="formState"
+      @submit="onSubmit"
+      class="space-y-4"
     >
-      <USelectMenu
-        v-model="formData.category"
-        :items="categoryOptions"
-        placeholder="Select a category"
-        clearable
-      />
-    </UFormField>
+      <UFormField required label="Title" name="title">
+        <UInput
+          class="w-full"
+          v-model="formState.title"
+          placeholder="Enter title"
+        />
+      </UFormField>
 
-    <!-- Submit and Cancel buttons -->
-    <div class="flex justify-end gap-2 pt-4">
-      <UButton type="button" variant="outline" @click="$emit('cancel')"
-        >Cancel</UButton
-      >
-      <UButton type="submit" color="primary" :loading="isSubmitting"
-        >Save Note</UButton
-      >
-    </div>
-  </form>
+      <UFormField required label="Content" name="content">
+        <UTextarea
+          class="w-full"
+          v-model="formState.content"
+          placeholder="Enter content"
+          :rows="5"
+        />
+      </UFormField>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <UButton
+          type="button"
+          color="neutral"
+          variant="outline"
+          @click="cancelForm"
+        >
+          Cancel
+        </UButton>
+        <UButton type="submit" color="primary" :loading="submitting">
+          {{ mode === "edit" ? "Save Changes" : "Save Note" }}
+        </UButton>
+      </div>
+    </UForm>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import type { FormSubmitEvent } from "@nuxt/ui";
+import {
+  createNoteSchema,
+  type CreateNoteSchema,
+} from "~/shared/types/notes.types";
 
-const props = defineProps({
-  clientId: {
-    type: String,
-    required: true,
-  },
-  note: {
-    type: Object,
-    default: () => ({}),
-  },
-});
+const props = defineProps<{
+  clientId: string;
+  programId: string;
+  mode?: "edit" | "create";
+  initial?: CreateNoteSchema;
+  noteId?: string;
+}>();
 
-const emit = defineEmits(["submit", "cancel"]);
-
-const isSubmitting = ref(false);
-const categoryOptions = [
-  "General",
-  "Medical",
-  "Financial",
-  "Progress",
-  "Feedback",
-  "Other",
-];
-
-const formData = reactive({
-  title: props.note?.title || "",
-  content: props.note?.content || "",
-  category: props.note?.category || "",
-});
-
-const errors = reactive({
+const emit = defineEmits(["cancelling", "done"]);
+const submitting = ref(false);
+const formState = ref<Partial<CreateNoteSchema>>({
   title: "",
   content: "",
-  category: "",
 });
 
-// Validate form
-function validateForm() {
-  let isValid = true;
-
-  // Reset errors
-  Object.keys(errors).forEach((key) => {
-    errors[key as keyof typeof errors] = "";
-  });
-
-  // Required fields
-  if (!formData.title.trim()) {
-    errors.title = "Title is required";
-    isValid = false;
+const onSubmit = async (event: FormSubmitEvent<CreateNoteSchema>) => {
+  submitting.value = true;
+  if (props.mode === "edit") {
+    await $fetch(`/api/notes/${props.noteId as string}`, {
+      method: "PATCH",
+      body: event.data,
+    })
+      .then((res) => {
+        useToast().add({
+          title: "Success",
+          description: res.message || "Changes saved",
+          color: "success",
+        });
+        emit("done");
+        formState.value = { title: "", content: "" };
+      })
+      .catch((error) => {
+        useToast().add({
+          title: "Error",
+          description:
+            error?.response?._data?.message ||
+            error.message ||
+            "Failed to save changes",
+          color: "error",
+        });
+      })
+      .finally(() => {
+        submitting.value = false;
+      });
+  } else {
+    await $fetch(`/api/clients/${props.clientId}/${props.programId}/notes`, {
+      method: "POST",
+      body: event.data,
+    })
+      .then((res) => {
+        useToast().add({
+          title: "Success",
+          description: res.message || "Note added",
+          color: "success",
+        });
+        emit("done");
+        formState.value = { title: "", content: "" };
+      })
+      .catch((error) => {
+        useToast().add({
+          title: "Error",
+          description:
+            error?.response?._data?.message ||
+            error.message ||
+            "Failed to add note",
+          color: "error",
+        });
+      })
+      .finally(() => {
+        submitting.value = false;
+      });
   }
+};
 
-  if (!formData.content.trim()) {
-    errors.content = "Content is required";
-    isValid = false;
+const cancelForm = () => {
+  emit("cancelling");
+};
+
+onMounted(() => {
+  if (props.mode === "edit" && props.initial) {
+    formState.value = props.initial;
   }
-
-  return isValid;
-}
-
-// Submit form
-async function handleSubmit() {
-  if (!validateForm()) return;
-
-  isSubmitting.value = true;
-
-  try {
-    emit("submit", {
-      ...formData,
-      clientId: props.clientId,
-      id: props.note?.id, // Include ID if editing existing note
-    });
-  } catch (error) {
-    console.error("Form submission error:", error);
-  } finally {
-    isSubmitting.value = false;
-  }
-}
+});
 </script>

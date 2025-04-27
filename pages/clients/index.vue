@@ -1,272 +1,259 @@
 <template>
-  <div class="grid">
-    <UCard class="mb-6 shadow light:bg-white">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h1 class="text-xl font-semibold">Clients</h1>
-          <USlideover
-            :ui="{
-              content: 'max-w-lg top-8 mx-auto rounded-t-lg',
-            }"
-            close-icon="i-lucide-chevron-down"
-            side="bottom"
-            :overlay="false"
-            v-model:open="createClientSlideOverOpen"
-            title="New Client"
-            aria-describedby="New client registration"
-            description="client registration"
-          >
-            <UButton icon="i-lucide-plus" label="Add Client" color="primary" />
-            <template #body>
-              <ClientRegistrationForm
-                @cancelling="createClientSlideOverOpen = false"
-                @done="
-                  () => {
-                    createClientSlideOverOpen = false;
-                    refresh();
-                  }
-                "
-              ></ClientRegistrationForm>
-            </template>
-          </USlideover>
-        </div>
-      </template>
-
-      <!-- Filters Modal -->
-      <UModal
-        description="Advanced client filters"
-        title="Client Filters"
-        aria-describedby="Filters"
-        v-model:open="isFilterOpen"
-        close
-      >
-        <template #body>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-            <UFormField class="grow" label="Gender">
-              <USelect
-                class="w-full"
-                v-model="filters.gender"
-                :items="genderOptions"
-                placeholder="All genders"
-                clearable
+  <RestrictedContent
+    :unless="authStore.role === 'doctor'"
+    :ui="{
+      fallback:
+        'w-full border px-6 py-8 mx-auto border-(--ui-border-accented) rounded-lg space-y-4',
+    }"
+  >
+    <div class="grid">
+      <UCard class="mb-6 shadow light:bg-white">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h1 class="text-xl font-semibold">Clients</h1>
+            <USlideover
+              :ui="{
+                content: 'max-w-lg top-8 mx-auto rounded-t-lg',
+              }"
+              close-icon="i-lucide-chevron-down"
+              side="bottom"
+              :overlay="false"
+              v-model:open="createClientSlideOverOpen"
+              title="New Client"
+              aria-describedby="New client registration"
+              description="client registration"
+            >
+              <UButton
+                icon="i-lucide-plus"
+                label="Add Client"
+                color="primary"
               />
-            </UFormField>
-            <UFormField label="Date From">
-              <UInput class="w-full" v-model="filters.dateFrom" type="date" />
-            </UFormField>
-            <UFormField label="Date To">
-              <UInput class="w-full" v-model="filters.dateTo" type="date" />
-            </UFormField>
-          </div>
-          <div class="flex justify-end p-4 gap-4">
-            <UButton
-              color="neutral"
-              icon="i-lucide-rotate-ccw"
-              variant="outline"
-              @click="resetFilters"
-            >
-              Reset
-            </UButton>
-            <UButton
-              class="text-gray-200"
-              color="primary"
-              @click="applyFilters"
-            >
-              Apply Filters
-            </UButton>
+              <template #body>
+                <ClientRegistrationForm
+                  @cancelling="createClientSlideOverOpen = false"
+                  @done="
+                    () => {
+                      createClientSlideOverOpen = false;
+                      refresh();
+                    }
+                  "
+                ></ClientRegistrationForm>
+              </template>
+            </USlideover>
           </div>
         </template>
-      </UModal>
 
-      <!-- Search & Filters -->
-      <div class="">
-        <!-- Search -->
-        <UButtonGroup class="w-full">
-          <UInput
-            class="grow"
-            size="lg"
-            v-model="searchQuery"
-            placeholder="Search by name, email or phone..."
-            icon="i-lucide-search"
-            @input="resetPage"
-          />
-
-          <UButton
-            icon="i-lucide-trash"
-            :disabled="!Object.entries(rowSelection).length"
-            size="lg"
-            color="neutral"
-            variant="outline"
-            @click="deleteSelected"
-            :loading="deletingSelected"
-            >Delete Selected</UButton
-          >
-
-          <!-- Filters -->
-          <UButton
-            color="neutral"
-            variant="outline"
-            size="lg"
-            icon="i-lucide-funnel"
-            @click="isFilterOpen = true"
-            >Filters</UButton
-          >
-        </UButtonGroup>
-      </div>
-
-      <!-- Clients Table -->
-      <div class="grid">
-        <UTable
-          :ui="{ root: 'horizontal-scrollbar' }"
-          v-if="clients"
-          @select="
-            (row) => {
-              row.toggleSelected(!row.getIsSelected());
-            }
-          "
-          ref="table"
-          v-model:expanded="expanded"
-          v-model:row-selection="rowSelection"
-          :columns="columns"
-          :data="clients.data"
-          :loading="tableLoading || status === 'pending'"
-          empty="No clients found"
+        <!-- Filters Modal -->
+        <UModal
+          description="Advanced client filters"
+          title="Client Filters"
+          aria-describedby="Filters"
+          v-model:open="isFilterOpen"
+          close
         >
-          <template #expanded="{ row: { original: client } }">
-            <UCard>
-              <div class="grid gap-2">
-                <div class="flex flex-wrap gap-2">
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-circle-user"></UIcon>Full
-                      Name</span
-                    >
-                    <div class="font-bold">
-                      {{ client.firstName }} {{ client.lastName }}
-                    </div>
-                  </div>
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-calendar-days"></UIcon>Date of
-                      Birth</span
-                    >
-                    <div class="font-bold">
-                      {{ new Date(client.dateOfBirth).toDateString() }}
-                    </div>
-                  </div>
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-map-pin-house"></UIcon
-                      >Address</span
-                    >
-                    <div class="font-bold">{{ client.address }}</div>
-                  </div>
-                  <div
-                    class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
-                  >
-                    <span class="flex items-center gap-2"
-                      ><UIcon name="i-lucide-calendar-clock"></UIcon
-                      >Registration Date</span
-                    >
-                    <div class="font-bold">
-                      {{ new Date(client.createdAt).toDateString() }}
-                    </div>
-                  </div>
-                </div>
-                <USeparator></USeparator>
-                <div>
-                  <h4>Programs</h4>
-                  <div class="flex gap-2">
-                    <UBadge
-                      v-for="healthProgram in client.healthPrograms"
-                      color="neutral"
-                      variant="outline"
-                      >{{ healthProgram.name }}</UBadge
-                    >
-                  </div>
-                </div>
-              </div>
-            </UCard>
+          <template #body>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+              <UFormField class="grow" label="Gender">
+                <USelect
+                  class="w-full"
+                  v-model="filters.gender"
+                  :items="genderOptions"
+                  placeholder="All genders"
+                  clearable
+                />
+              </UFormField>
+              <UFormField label="Date From">
+                <UInput class="w-full" v-model="filters.dateFrom" type="date" />
+              </UFormField>
+              <UFormField label="Date To">
+                <UInput class="w-full" v-model="filters.dateTo" type="date" />
+              </UFormField>
+            </div>
+            <div class="flex justify-end p-4 gap-4">
+              <UButton
+                color="neutral"
+                icon="i-lucide-rotate-ccw"
+                variant="outline"
+                @click="resetFilters"
+              >
+                Reset
+              </UButton>
+              <UButton
+                class="text-gray-200"
+                color="primary"
+                @click="applyFilters"
+              >
+                Apply Filters
+              </UButton>
+            </div>
           </template>
-        </UTable>
-      </div>
+        </UModal>
 
-      <!-- Pagination -->
-      <div class="mt-4 flex justify-between items-center">
-        <div class="text-sm">
-          Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
-          {{ paginationInfo.total }} entries
-        </div>
-        <UPagination
-          v-model:page="currentPage"
-          size="xs"
-          :items-per-page="limit"
-          :total="paginationInfo.total"
-        />
-      </div>
-      <div
-        class="py-2 mt-2 border-t border-(--ui-border-accented) text-sm text-muted flex justify-between"
-      >
-        <div>
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }}
-          of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}
-          clients(s) selected.
-        </div>
+        <!-- Search & Filters -->
         <div class="">
-          <UButtonGroup>
-            <USelect
-              class="w-20"
-              v-model="limit"
-              :items="
-                [5, 10, 15, 20, 25, 50, 75, 100].map((count) => ({
-                  label: `${count}`,
-                  value: count,
-                }))
-              "
+          <!-- Search -->
+          <UButtonGroup class="w-full">
+            <UInput
+              class="grow"
+              size="lg"
+              v-model="searchQuery"
+              placeholder="Search by name, email or phone..."
+              icon="i-lucide-search"
+              @input="resetPage"
+            />
+
+            <UButton
+              icon="i-lucide-trash"
+              :disabled="!Object.entries(rowSelection).length"
+              size="lg"
+              color="neutral"
+              variant="outline"
+              @click="deleteSelected"
+              :loading="deletingSelected"
+              >Delete Selected</UButton
             >
-            </USelect>
-            <UButton color="neutral" variant="outline"
-              >Clients per page</UButton
+
+            <!-- Filters -->
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="lg"
+              icon="i-lucide-funnel"
+              @click="isFilterOpen = true"
+              >Filters</UButton
             >
           </UButtonGroup>
         </div>
-      </div>
-    </UCard>
 
-    <!-- Delete Confirmation Modal -->
-    <!-- <UModal v-model="showDeleteModal">
-      <UButton>Delete</UButton>
-      <template #content>
-        <UCard>
-          <template #header>
-            <div class="font-semibold text-lg">Confirm Deletion</div>
-          </template>
-          <p>
-            Are you sure you want to delete the client
-            {{ clientToDelete?.firstName }} {{ clientToDelete?.lastName }}?
-          </p>
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton
-                color="gray"
-                variant="outline"
-                @click="showDeleteModal = false"
-                >Cancel</UButton
+        <!-- Clients Table -->
+        <div class="grid">
+          <UTable
+            :ui="{ root: 'horizontal-scrollbar' }"
+            v-if="clients"
+            @select="
+              (row) => {
+                row.toggleSelected(!row.getIsSelected());
+              }
+            "
+            ref="table"
+            v-model:expanded="expanded"
+            v-model:row-selection="rowSelection"
+            :columns="columns"
+            :data="clients.data"
+            :loading="tableLoading || status === 'pending'"
+            empty="No clients found"
+          >
+            <template #expanded="{ row: { original: client } }">
+              <UCard>
+                <div class="grid gap-2">
+                  <div class="flex flex-wrap gap-2">
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-circle-user"></UIcon>Full
+                        Name</span
+                      >
+                      <div class="font-bold">
+                        {{ client.firstName }} {{ client.lastName }}
+                      </div>
+                    </div>
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-calendar-days"></UIcon>Date of
+                        Birth</span
+                      >
+                      <div class="font-bold">
+                        {{ new Date(client.dateOfBirth).toDateString() }}
+                      </div>
+                    </div>
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-map-pin-house"></UIcon
+                        >Address</span
+                      >
+                      <div class="font-bold">{{ client.address }}</div>
+                    </div>
+                    <div
+                      class="px-3 py-1 border border-dashed border-(--ui-border-accented) bg-(--ui-bg-accented)"
+                    >
+                      <span class="flex items-center gap-2"
+                        ><UIcon name="i-lucide-calendar-clock"></UIcon
+                        >Registration Date</span
+                      >
+                      <div class="font-bold">
+                        {{ new Date(client.createdAt).toDateString() }}
+                      </div>
+                    </div>
+                  </div>
+                  <USeparator></USeparator>
+                  <div>
+                    <h4>Programs</h4>
+                    <div class="flex gap-2">
+                      <UBadge
+                        v-for="healthProgram in client.programs"
+                        color="neutral"
+                        variant="outline"
+                        >{{ healthProgram.name }}</UBadge
+                      >
+                    </div>
+                  </div>
+                </div>
+              </UCard>
+            </template>
+          </UTable>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 flex justify-between items-center">
+          <div class="text-sm">
+            Showing {{ paginationInfo.from }} to {{ paginationInfo.to }} of
+            {{ paginationInfo.total }} entries
+          </div>
+          <UPagination
+            v-model:page="currentPage"
+            size="xs"
+            :items-per-page="limit"
+            :total="paginationInfo.total"
+          />
+        </div>
+        <div
+          class="py-2 mt-2 border-t border-(--ui-border-accented) text-sm text-muted flex justify-between"
+        >
+          <div>
+            {{
+              table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0
+            }}
+            of
+            {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}
+            clients(s) selected.
+          </div>
+          <div class="">
+            <UButtonGroup>
+              <USelect
+                class="w-20"
+                v-model="limit"
+                :items="
+                  [5, 10, 15, 20, 25, 50, 75, 100].map((count) => ({
+                    label: `${count}`,
+                    value: count,
+                  }))
+                "
               >
-              <UButton color="red" @click="deleteClient">Delete</UButton>
-            </div>
-          </template>
-        </UCard>
-      </template>
-    </UModal> -->
-  </div>
+              </USelect>
+              <UButton color="neutral" variant="outline"
+                >Clients per page</UButton
+              >
+            </UButtonGroup>
+          </div>
+        </div>
+      </UCard>
+    </div>
+  </RestrictedContent>
 </template>
 
 <script setup lang="ts">
@@ -275,8 +262,8 @@ import type { Client, HealthProgram } from "~/generated/prisma";
 import type { Column, Row } from "@tanstack/vue-table";
 import type { Paginated } from "~/shared/types/pagination.types";
 
-type ClientWithHealthPrograms = Client & { healthProgram: HealthProgram };
-
+type ClientWithHealthPrograms = Client & { programs: HealthProgram[] };
+const authStore = useAuthStore();
 const table = useTemplateRef("table");
 const tableLoading = ref(false);
 
@@ -446,7 +433,7 @@ function getRowItems(row: Row<ClientWithHealthPrograms>) {
       label: "Copy client's ID",
       icon: "i-lucide-copy",
       onSelect() {
-        navigator.clipboard.writeText(String(row.original.id));
+        navigator.clipboard.writeText(row.original.id);
         useToast().add({
           title: "Copied client's ID to clipboard!",
           color: "success",

@@ -1,7 +1,7 @@
 import prisma from "~/lib/prisma";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ ids: number[] }>(event);
+  const body = await readBody<{ ids: string[] }>(event);
 
   if (Array.isArray(body?.ids)) {
     // Unenroll clients from this program
