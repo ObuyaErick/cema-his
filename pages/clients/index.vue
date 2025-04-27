@@ -260,7 +260,7 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
 import type { Client, HealthProgram } from "~/generated/prisma";
-import type { Column, Row } from "@tanstack/vue-table";
+import type { Column, Row, Table } from "@tanstack/vue-table";
 import type { Paginated } from "~/shared/types/pagination.types";
 
 type ClientWithHealthPrograms = Client & { programs: HealthProgram[] };

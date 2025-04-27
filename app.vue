@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { LOGOUT_ACTION_KEY } from './shared/utils/keys';
+import { LOGOUT_ACTION_KEY } from "~/shared/utils/keys";
 
 const appStore = useAppStore();
 const authStore = useAuthStore();

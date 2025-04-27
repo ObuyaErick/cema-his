@@ -4,9 +4,6 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET || "dev-secret-key",
-    public: {
-      apiBase: "/api",
-    },
   },
   vite: {
     server: {

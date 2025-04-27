@@ -216,11 +216,12 @@ const editRoleFor = (id: string) => {
 
 const submitModification = async () => {
   modifyingRole.value = true;
-  await $fetch(`/api/users/${newRole.value.user}`, {
+  const id: string = newRole.value.user;
+  await $fetch(`/api/users/${id}`, {
     method: "PATCH",
     body: { role: newRole.value.role },
   })
-    .then((res) => {
+    .then((res: any) => {
       useToast().add({
         title: "Success",
         description: res.message || "User's role modified",
