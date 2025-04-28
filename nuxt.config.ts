@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET || "dev-secret-key",
   },
+  nitro: {
+    node: true,
+  },
   vite: {
     optimizeDeps: {
       esbuildOptions: {
