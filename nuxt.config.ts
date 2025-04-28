@@ -6,6 +6,14 @@ export default defineNuxtConfig({
     jwtSecret: process.env.JWT_SECRET || "dev-secret-key",
   },
   vite: {
+    optimizeDeps: {
+      esbuildOptions: {
+        target: "es2022",
+      },
+    },
+    build: {
+      sourcemap: false,
+    },
     server: {
       watch: {
         ignored: ["**/infra/postgres/data/**"],
@@ -16,7 +24,6 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/image",
     "@nuxt/ui",
-    // "@nuxt/fonts",
     "@vueuse/nuxt",
     "@pinia/nuxt",
   ],
