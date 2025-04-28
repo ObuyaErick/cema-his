@@ -11,7 +11,7 @@ RUN yarn install --frozen-lockfile
 # Copy the rest of the application
 COPY . .
 # Generate Prisma client
-RUN npx prisma generate
+RUN yarn prisma generate
 # Build the Nuxt application
 RUN yarn build
 # Production stage
@@ -23,6 +23,10 @@ COPY --from=builder /app/.output /app/.output
 COPY --from=builder /app/.nuxt /app/.nuxt
 COPY --from=builder /app/package.json /app/
 COPY --from=builder /app/yarn.lock* /app/
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/prisma /app/prisma
+COPY --from=builder /app/lib /app/lib
+COPY --from=builder /app/generated /app/generated
 # Set environment variables
 ENV NODE_ENV=production
 ENV NUXT_HOST=0.0.0.0

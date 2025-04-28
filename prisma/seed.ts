@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { hashSync } from "bcrypt";
-import prisma from "~/lib/prisma";
+import prisma from "../lib/prisma";
 
 // Number of clients to generate
 const NUM_CLIENTS = 5;
